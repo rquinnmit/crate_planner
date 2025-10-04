@@ -20,13 +20,14 @@ import {
     createCandidatePoolPrompt,
     createSequencePlanPrompt,
     createExplainPlanPrompt,
-    createRevisionPrompt,
+    createRevisionPrompt
+} from '../prompts/crate_prompting';
+import {
     formatSeedTracks,
     formatTrackList,
-    formatTracksWithDuration,
     formatSeedTrackIds,
     formatCrateTracks
-} from '../prompts/crate_prompting';
+} from '../prompts/formatters';
 import { formatMMSS, formatMinutes } from '../utils/time_formatters';
 import { validateCratePlan } from '../validation/constraints';
 
@@ -136,25 +137,12 @@ export class CratePlanner {
         // Create ordered track list starting with seed tracks
         const trackList = this.sequencePlanDeterministic(prompt, candidates, seedTracks);
 
-        // Calculate total duration
-        const totalDuration = trackList.reduce((sum, trackId) => {
-            const track = this.catalog.getTrack(trackId);
-            return sum + (track?.duration_sec || 0);
-        }, 0);
-
-        const plan: CratePlan = {
+        return this._createPlanObject(
             prompt,
             trackList,
-            annotations: 'Plan created using deterministic heuristics',
-            totalDuration,
-            planDetails: {
-                usedAI: false
-            },
-            isFinalized: false
-        };
-
-        this.currentPlan = plan;
-        return plan;
+            'Plan created using deterministic heuristics',
+            false
+        );
     }
 
     /**
@@ -170,23 +158,22 @@ export class CratePlanner {
         const llmPrompt = createDeriveIntentPrompt(prompt, seedTrackInfo);
         const response = await llm.executeLLM(llmPrompt);
         
-        try {
-            const intent = parseDerivedIntent(response);
-            
-            // Validate and set defaults
-            if (!intent.tempoRange) {
-                intent.tempoRange = prompt.tempoRange || { min: 100, max: 140 };
-            }
-            if (!intent.duration) {
-                intent.duration = prompt.targetDuration || 3600;
-            }
-
-            return intent;
-        } catch (error) {
-            console.error('❌ Error parsing LLM intent response:', (error as Error).message);
-            // Fallback to basic intent
-            return this.createFallbackIntent(prompt);
-        }
+        return this._parseLLMResponse(
+            response,
+            parseDerivedIntent,
+            (intent) => {
+                // Validate and set defaults
+                if (!intent.tempoRange) {
+                    intent.tempoRange = prompt.tempoRange || { min: 100, max: 140 };
+                }
+                if (!intent.duration) {
+                    intent.duration = prompt.targetDuration || 3600;
+                }
+                return intent;
+            },
+            () => this.createFallbackIntent(prompt),
+            'intent'
+        );
     }
 
     /**
@@ -204,25 +191,21 @@ export class CratePlanner {
         const llmPrompt = createCandidatePoolPrompt(intent, trackList);
         const response = await llm.executeLLM(llmPrompt);
 
-        try {
-            const result = parseCandidatePoolSelection(response);
-
-            const pool: CandidatePool = {
+        return this._parseLLMResponse(
+            response,
+            parseCandidatePoolSelection,
+            (result) => ({
                 sourcePrompt: { targetGenre: intent.targetGenres[0], tempoRange: intent.tempoRange },
                 tracks: new Set(result.selectedTrackIds),
                 filtersApplied: result.reasoning
-            };
-
-            return pool;
-        } catch (error) {
-            console.error('❌ Error parsing LLM candidate pool response:', (error as Error).message);
-            // Fallback to deterministic candidates
-            return {
+            }),
+            () => ({
                 sourcePrompt: { targetGenre: intent.targetGenres[0], tempoRange: intent.tempoRange },
                 tracks: new Set(deterministicCandidates.map(t => t.id)),
                 filtersApplied: 'Deterministic filtering (LLM parsing failed)'
-            };
-        }
+            }),
+            'candidate pool'
+        );
     }
 
     /**
@@ -247,64 +230,39 @@ export class CratePlanner {
             .map(id => this.catalog.getTrack(id))
             .filter((track): track is Track => track !== undefined);
 
-        const trackInfo = formatTracksWithDuration(candidateTracks);
+        const trackInfo = formatTrackList(candidateTracks, { withDuration: true });
         const seedInfo = formatSeedTrackIds(seedTrackObjects);
         const llmPrompt = createSequencePlanPrompt(intent, trackInfo, seedInfo);
         const response = await llm.executeLLM(llmPrompt);
 
-        try {
-            const result = parseTrackSequence(response);
-
-            // Validate tracks exist
-            const validTracks = result.orderedTrackIds.filter(id => this.catalog.getTrack(id));
-
-            const totalDuration = validTracks.reduce((sum, id) => {
-                const track = this.catalog.getTrack(id);
-                return sum + (track?.duration_sec || 0);
-            }, 0);
-
-            const plan: CratePlan = {
-                prompt: pool.sourcePrompt,
-                trackList: validTracks,
-                annotations: result.reasoning,
-                totalDuration,
-                planDetails: {
-                    llmModel: this.llmSettings.model,
-                    usedAI: true
-                },
-                isFinalized: false
-            };
-
-            this.currentPlan = plan;
-            return plan;
-        } catch (error) {
-            console.error('❌ Error parsing LLM sequence response:', (error as Error).message);
-            // Fallback to deterministic sequencing
-            const trackList = this.sequencePlanDeterministic(
-                pool.sourcePrompt,
-                candidateTracks,
-                seedTracks
-            );
-
-            const totalDuration = trackList.reduce((sum, id) => {
-                const track = this.catalog.getTrack(id);
-                return sum + (track?.duration_sec || 0);
-            }, 0);
-
-            const plan: CratePlan = {
-                prompt: pool.sourcePrompt,
-                trackList,
-                annotations: 'Deterministic sequencing (LLM parsing failed)',
-                totalDuration,
-                planDetails: {
-                    usedAI: false
-                },
-                isFinalized: false
-            };
-
-            this.currentPlan = plan;
-            return plan;
-        }
+        return this._parseLLMResponse(
+            response,
+            parseTrackSequence,
+            (result) => {
+                const validTracks = result.orderedTrackIds.filter(id => this.catalog.getTrack(id));
+                return this._createPlanObject(
+                    pool.sourcePrompt,
+                    validTracks,
+                    result.reasoning,
+                    true,
+                    this.llmSettings.model
+                );
+            },
+            () => {
+                const trackList = this.sequencePlanDeterministic(
+                    pool.sourcePrompt,
+                    candidateTracks,
+                    seedTracks
+                );
+                return this._createPlanObject(
+                    pool.sourcePrompt,
+                    trackList,
+                    'Deterministic sequencing (LLM parsing failed)',
+                    false
+                );
+            },
+            'sequence'
+        );
     }
 
     /**
@@ -344,31 +302,26 @@ export class CratePlanner {
         const llmPrompt = createRevisionPrompt(trackDetails, instructions, availableTrackInfo);
         const response = await llm.executeLLM(llmPrompt);
 
-        try {
-            const result = parsePlanRevision(response);
-
-            // Validate tracks exist
-            const validTracks = result.revisedTrackIds.filter(id => this.catalog.getTrack(id));
-
-            const totalDuration = validTracks.reduce((sum, id) => {
-                const track = this.catalog.getTrack(id);
-                return sum + (track?.duration_sec || 0);
-            }, 0);
-
-            const revisedPlan: CratePlan = {
-                ...plan,
-                trackList: validTracks,
-                annotations: result.changesExplanation,
-                totalDuration,
-                isFinalized: false
-            };
-
-            this.currentPlan = revisedPlan;
-            return revisedPlan;
-        } catch (error) {
-            console.error('❌ Error parsing LLM revision response:', (error as Error).message);
-            throw new Error('Failed to revise plan: LLM response parsing failed');
-        }
+        return this._parseLLMResponse(
+            response,
+            parsePlanRevision,
+            (result) => {
+                const validTracks = result.revisedTrackIds.filter(id => this.catalog.getTrack(id));
+                const revisedPlan: CratePlan = {
+                    ...plan,
+                    trackList: validTracks,
+                    annotations: result.changesExplanation,
+                    totalDuration: this._calculateTotalDuration(validTracks),
+                    isFinalized: false
+                };
+                this.currentPlan = revisedPlan;
+                return revisedPlan;
+            },
+            () => {
+                throw new Error('Failed to revise plan: LLM response parsing failed');
+            },
+            'revision'
+        );
     }
 
     /**
@@ -456,6 +409,60 @@ export class CratePlanner {
     }
 
     // ========== PRIVATE HELPER METHODS ==========
+
+    /**
+     * Parse LLM response with a fallback mechanism
+     */
+    private _parseLLMResponse<T, U>(
+        response: string,
+        parser: (text: string) => T,
+        onSuccess: (parsed: T) => U,
+        onFailure: () => U,
+        errorContext: string
+    ): U {
+        try {
+            const parsed = parser(response);
+            return onSuccess(parsed);
+        } catch (error) {
+            console.error(`❌ Error parsing LLM ${errorContext} response:`, (error as Error).message);
+            return onFailure();
+        }
+    }
+
+    /**
+     * Calculate total duration of a track list
+     */
+    private _calculateTotalDuration(trackIds: string[]): number {
+        return trackIds.reduce((sum, id) => {
+            const track = this.catalog.getTrack(id);
+            return sum + (track?.duration_sec || 0);
+        }, 0);
+    }
+
+    /**
+     * Create a CratePlan object
+     */
+    private _createPlanObject(
+        prompt: CratePrompt,
+        trackList: string[],
+        annotations: string,
+        usedAI: boolean,
+        llmModel?: string
+    ): CratePlan {
+        const plan: CratePlan = {
+            prompt,
+            trackList,
+            annotations,
+            totalDuration: this._calculateTotalDuration(trackList),
+            planDetails: {
+                usedAI,
+                llmModel,
+            },
+            isFinalized: false,
+        };
+        this.currentPlan = plan;
+        return plan;
+    }
 
     /**
      * Generate candidate pool using deterministic filtering

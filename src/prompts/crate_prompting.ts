@@ -5,9 +5,7 @@
  * Provides consistent, well-structured prompts with proper formatting and guidelines.
  */
 
-import { CratePrompt, DerivedIntent, CratePlan } from '../core/crate_planner';
-import { Track } from '../core/track';
-import { formatDurationLong, formatBPMRange as formatBPM } from '../utils/time_formatters';
+import { CratePrompt, DerivedIntent } from '../core/crate_planner';
 
 /**
  * Generate prompt for deriving intent from user input
@@ -206,134 +204,6 @@ Return ONLY a JSON object:
   "changesExplanation": "What changed and why"
 }
 `;
-}
-
-// ========== HELPER FUNCTIONS FOR FORMATTING ==========
-
-/**
- * Format seed tracks for prompt inclusion
- * 
- * @param tracks - Array of Track objects
- * @returns Formatted string of seed tracks
- */
-export function formatSeedTracks(tracks: Track[]): string {
-    if (tracks.length === 0) {
-        return 'None provided';
-    }
-    
-    return tracks
-        .map(track => `- ${track.artist} - ${track.title} (${track.bpm} BPM, ${track.key}, Energy: ${track.energy || 'N/A'})`)
-        .join('\n');
-}
-
-/**
- * Format track list for candidate pool prompt
- * 
- * @param tracks - Array of Track objects
- * @returns Formatted string of tracks with full details
- */
-export function formatTrackList(tracks: Track[]): string {
-    if (tracks.length === 0) {
-        return 'No tracks available';
-    }
-    
-    return tracks
-        .map(track => `${track.id}: ${track.artist} - ${track.title} (${track.bpm} BPM, ${track.key}, Energy: ${track.energy || 'N/A'})`)
-        .join('\n');
-}
-
-/**
- * Format track list with duration for sequencing prompt
- * 
- * @param tracks - Array of Track objects
- * @returns Formatted string with duration information
- */
-export function formatTracksWithDuration(tracks: Track[]): string {
-    if (tracks.length === 0) {
-        return 'No tracks available';
-    }
-    
-    return tracks
-        .map(track => `${track.id}: ${track.artist} - ${track.title} (${track.bpm} BPM, ${track.key}, ${track.duration_sec}s, Energy: ${track.energy || 'N/A'})`)
-        .join('\n');
-}
-
-/**
- * Format seed track IDs with basic info for sequencing prompt
- * 
- * @param tracks - Array of Track objects
- * @returns Formatted string of seed tracks (simplified)
- */
-export function formatSeedTrackIds(tracks: Track[]): string {
-    if (tracks.length === 0) {
-        return 'None';
-    }
-    
-    return tracks
-        .map(track => `${track.id}: ${track.artist} - ${track.title}`)
-        .join('\n');
-}
-
-/**
- * Format crate tracks for explanation/revision prompts
- * 
- * @param tracks - Array of Track objects
- * @param includeEnergy - Whether to include energy information
- * @returns Formatted numbered list of tracks
- */
-export function formatCrateTracks(tracks: Track[], includeEnergy: boolean = false): string {
-    if (tracks.length === 0) {
-        return 'Empty crate';
-    }
-    
-    return tracks
-        .map((track, index) => {
-            const baseInfo = `${index + 1}. ${track.artist} - ${track.title} (${track.bpm} BPM, ${track.key})`;
-            if (includeEnergy) {
-                return `${index + 1}. ${track.id}: ${track.artist} - ${track.title} (${track.bpm} BPM, ${track.key}, Energy: ${track.energy || 'N/A'})`;
-            }
-            return baseInfo;
-        })
-        .join('\n');
-}
-
-/**
- * Format duration in a human-readable way
- * Re-exported from time_formatters for convenience
- * 
- * @param seconds - Duration in seconds
- * @returns Formatted duration string (e.g., "90 minutes" or "1 hour 30 minutes")
- */
-export function formatDuration(seconds: number): string {
-    return formatDurationLong(seconds);
-}
-
-/**
- * Format BPM range for display
- * Re-exported from time_formatters for convenience
- * 
- * @param min - Minimum BPM
- * @param max - Maximum BPM
- * @returns Formatted BPM range string
- */
-export function formatBPMRange(min: number, max: number): string {
-    return formatBPM(min, max);
-}
-
-/**
- * Format key list for display
- * 
- * @param keys - Array of Camelot keys
- * @returns Formatted key list string
- */
-export function formatKeyList(keys: string[]): string {
-    if (keys.length === 0) {
-        return 'Any';
-    }
-    if (keys.length > 6) {
-        return `${keys.slice(0, 6).join(', ')}, and ${keys.length - 6} more`;
-    }
-    return keys.join(', ');
 }
 
 // ========== PROMPT VALIDATION ==========

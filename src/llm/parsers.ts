@@ -29,6 +29,32 @@ export function extractJSON(response: string): string {
 }
 
 /**
+ * Generic parser for LLM responses that contain a list of track IDs and a reasoning string.
+ */
+function parseTrackIdResponse(
+    response: string,
+    idKey: string,
+    reasoningKey: string,
+    context: string
+): { ids: string[]; reasoning: string } {
+    try {
+        const jsonStr = extractJSON(response);
+        const parsed = JSON.parse(jsonStr);
+        
+        if (!Array.isArray(parsed[idKey])) {
+            throw new Error(`'${idKey}' must be an array`);
+        }
+        
+        return {
+            ids: parsed[idKey],
+            reasoning: parsed[reasoningKey] || 'No reasoning provided'
+        };
+    } catch (error) {
+        throw new Error(`Failed to parse ${context}: ${(error as Error).message}`);
+    }
+}
+
+/**
  * Parse and validate DerivedIntent from LLM response
  * 
  * @param response - Raw LLM response text
@@ -80,21 +106,11 @@ export function parseCandidatePoolSelection(response: string): {
     selectedTrackIds: string[];
     reasoning: string;
 } {
-    try {
-        const jsonStr = extractJSON(response);
-        const parsed = JSON.parse(jsonStr);
-        
-        if (!Array.isArray(parsed.selectedTrackIds)) {
-            throw new Error('selectedTrackIds must be an array');
-        }
-        
-        return {
-            selectedTrackIds: parsed.selectedTrackIds,
-            reasoning: parsed.reasoning || 'No reasoning provided'
-        };
-    } catch (error) {
-        throw new Error(`Failed to parse candidate pool selection: ${(error as Error).message}`);
-    }
+    const result = parseTrackIdResponse(response, 'selectedTrackIds', 'reasoning', 'candidate pool selection');
+    return {
+        selectedTrackIds: result.ids,
+        reasoning: result.reasoning
+    };
 }
 
 /**
@@ -108,21 +124,11 @@ export function parseTrackSequence(response: string): {
     orderedTrackIds: string[];
     reasoning: string;
 } {
-    try {
-        const jsonStr = extractJSON(response);
-        const parsed = JSON.parse(jsonStr);
-        
-        if (!Array.isArray(parsed.orderedTrackIds)) {
-            throw new Error('orderedTrackIds must be an array');
-        }
-        
-        return {
-            orderedTrackIds: parsed.orderedTrackIds,
-            reasoning: parsed.reasoning || 'No reasoning provided'
-        };
-    } catch (error) {
-        throw new Error(`Failed to parse track sequence: ${(error as Error).message}`);
-    }
+    const result = parseTrackIdResponse(response, 'orderedTrackIds', 'reasoning', 'track sequence');
+    return {
+        orderedTrackIds: result.ids,
+        reasoning: result.reasoning
+    };
 }
 
 /**
@@ -136,21 +142,11 @@ export function parsePlanRevision(response: string): {
     revisedTrackIds: string[];
     changesExplanation: string;
 } {
-    try {
-        const jsonStr = extractJSON(response);
-        const parsed = JSON.parse(jsonStr);
-        
-        if (!Array.isArray(parsed.revisedTrackIds)) {
-            throw new Error('revisedTrackIds must be an array');
-        }
-        
-        return {
-            revisedTrackIds: parsed.revisedTrackIds,
-            changesExplanation: parsed.changesExplanation || 'No explanation provided'
-        };
-    } catch (error) {
-        throw new Error(`Failed to parse plan revision: ${(error as Error).message}`);
-    }
+    const result = parseTrackIdResponse(response, 'revisedTrackIds', 'changesExplanation', 'plan revision');
+    return {
+        revisedTrackIds: result.ids,
+        changesExplanation: result.reasoning
+    };
 }
 
 /**

@@ -5,25 +5,28 @@
  * with a consistent API.
  */
 
+// Base exporter
+export { BaseExporter, ExportResult } from './base_exporter';
+
+// Rekordbox exporter
 export { 
     RekordboxExporter, 
     RekordboxExportOptions,
     exportToRekordbox 
 } from './rekordbox_exporter';
 
+// Serato exporter
 export { 
     SeratoExporter, 
     SeratoExportOptions,
     exportToSerato 
 } from './serato_exporter';
 
-export { ExportResult } from './rekordbox_exporter';
-
 import { CratePlan } from '../core/crate_planner';
 import { MusicAssetCatalog } from '../core/catalog';
 import { RekordboxExporter } from './rekordbox_exporter';
 import { SeratoExporter } from './serato_exporter';
-import { ExportResult } from './rekordbox_exporter';
+import { ExportResult } from './base_exporter';
 
 /**
  * Supported DJ software platforms
