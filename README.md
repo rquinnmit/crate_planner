@@ -1,182 +1,137 @@
-# DayPlanner 
-A simple day planner. This implementation focuses on the core concept of organizing activities for a single day with both manual and AI-assisted scheduling.
+# CratePilot
 
-## Concept: DayPlanner
+An AI co-pilot for DJs that converts a short event description and seed tracks into a performance-ready, ordered crate. Shrinks crate prep from hours to minutes by combining a structured library, prompt-driven planning, transition scoring, and one-click export to DJ software.
 
-**Purpose**: Help you organize activities for a single day  
-**Principle**: You can add activities one at a time, assign them to times, and then observe the completed schedule
+## 🎯 Problem & Context
 
-### Core State
-- **Activities**: Set of activities with title, duration, and optional startTime
-- **Assignments**: Set of activity-to-time assignments
-- **Time System**: All times in half-hour slots starting at midnight (0 = 12:00 AM, 13 = 6:30 AM)
+**The Pain Point:** DJs spend significant time digging for tracks and testing what blends—balancing BPM, key, genre, structure, energy, and crowd fit. The workflow is fragmented across streaming sites, DJ apps, and personal notes.
 
-### Core Actions
-- `addActivity(title: string, duration: number): Activity`
-- `removeActivity(activity: Activity)`
-- `assignActivity(activity: Activity, startTime: number)`
-- `unassignActivity(activity: Activity)`
-- `requestAssignmentsFromLLM()` - AI-assisted scheduling with hardwired preferences
+**Why Now:** Massive track volume and "one-size-fits-all" AI radios don't respect human style, venue constraints, or harmonic mixing rules.
 
-## Prerequisites
+## 👥 Who It Serves
 
-- **Node.js** (version 14 or higher)
-- **TypeScript** (will be installed automatically)
-- **Google Gemini API Key** (free at [Google AI Studio](https://makersuite.google.com/app/apikey))
+- **DJs:** Faster prep, better compatibility, fewer risky transitions
+- **Venues & Audiences:** Sets that fit the event type and maintain flow
+- **Platforms** (Beatport/Beatsource) & **DJ Software** (Rekordbox/Serato): Cleaner discovery and direct playlist integration
+- **Artists/Labels:** Increased discovery by match quality (not just popularity)
 
-## Quick Setup
+## ✨ Core Features
 
-### 0. Clone the repo locally and navigate to it
-```cd intro-gemini-schedule```
+### 1. Discovery
+Enter "rooftop sunset • tech house • 120–124 BPM" + 2–3 seed tracks → get a 90–120 min crate matched to style and constraints.
 
-### 1. Install Dependencies
+### 2. Library
+Normalize & store track metadata/features; reuse across plans.
 
-```bash
-npm install
-```
+### 3. Export
+One-click export to Rekordbox/Serato playlists for performance.
 
-### 2. Add Your API Key
+## 🏗️ System Architecture
 
-**Why use a template?** The `config.json` file contains your private API key and should never be committed to version control. The template approach lets you:
-- Keep the template file in git (safe to share)
-- Create your own `config.json` locally (keeps your API key private)
-- Easily set up the project on any machine
+### MusicAssetCatalog
+- Stores tracks with **Tags** (artist, title, genre, duration) and **Features** (BPM, key, sections)
+- Provides filtered candidate lists (by BPM range, key, genre, etc.)
 
-**Step 1:** Copy the template file:
-```bash
-cp config.json.template config.json
-```
+### CratePlanning
+- Produces an **ordered** crate that respects a **Prompt** (tempo range, key, genre, seeds, duration, notes)
+- Supports user feedback and finalization
 
-**Step 2:** Edit `config.json` and add your API key:
-```json
-{
-  "apiKey": "YOUR_GEMINI_API_KEY_HERE"
-}
-```
+### PlanExporter
+- Converts finalized plans to DJ-software-friendly playlist formats
 
-**To get your API key:**
-1. Go to [Google AI Studio](https://makersuite.google.com/app/apikey)
-2. Sign in with your Google account
-3. Click "Create API Key"
-4. Copy the key and paste it into `config.json` (replacing `YOUR_GEMINI_API_KEY_HERE`)
+## 🤖 AI Augmentation
 
-### 3. Run the Application
+CratePlanning is extended with optional LLM-powered actions (manual path still works):
 
-**Run all test cases:**
-```bash
-npm start
-```
+- **deriveIntentLLM:** Interprets the prompt + seeds, expands constraints
+- **generateCandidatePoolLLM:** Builds filter expressions from the derived intent
+- **sequencePlanLLM:** Proposes an **ordered** list satisfying duration and energy trajectory
+- **explainPlanLLM:** Natural-language annotations explaining why each transition works
+- **revisePlanLLM:** Applies constrained edits from user instructions
+- **LLMSettings:** Toggle AI, set model/temperature/prompts; track provenance
 
-**Run specific test cases:**
-```bash
-npm run manual    # Manual scheduling only
-npm run llm       # LLM-assisted scheduling only
-npm run mixed     # Mixed manual + LLM scheduling
-```
+**Backwards compatibility:** Manual `createPlan` (deterministic heuristic) remains available; all AI features are additive and optional.
 
-## File Structure
+## 📊 Data & Metadata
 
-```
-dayplanner/
-├── package.json              # Dependencies and scripts
-├── tsconfig.json             # TypeScript configuration
-├── config.json               # Your Gemini API key
-├── dayplanner-types.ts       # Core type definitions
-├── dayplanner.ts             # DayPlanner class implementation
-├── dayplanner-llm.ts         # LLM integration
-├── dayplanner-tests.ts       # Test cases and examples
-├── dist/                     # Compiled JavaScript output
-└── README.md                 # This file
-```
+### Tags
+- `artist`, `title`, `genre?`, `duration_sec`
 
-## Test Cases
+### Features
+- `bpm`, `key` (Camelot notation like 8A/8B), optional `sections`, optional `energy (1–5)`
 
-The application includes three comprehensive test cases:
+### Prompt
+- `tempoRange?`, `targetKey?`, `targetGenre?`, `sampleTracks?`, `targetDuration?`, `notes?`
+- Plus `mixingStyle?`, `energyCurve?` (for AI path)
 
-### 1. Manual Scheduling
-Demonstrates adding activities and manually assigning them to time slots:
 
-```typescript
-const planner = new DayPlanner();
-const breakfast = planner.addActivity('Breakfast', 1); // 30 minutes
-planner.assignActivity(breakfast, 14); // 7:00 AM
-```
+## 🔄 Workflow (Happy Path)
 
-### 2. LLM-Assisted Scheduling
-Shows AI-powered scheduling with hardwired preferences:
+1. **User prompt & seeds** →
+2. *(AI on)* **deriveIntentLLM** (expand constraints & energy curve) →
+3. **generateCandidatePoolLLM** (filter catalog to a viable set) →
+4. **sequencePlanLLM** (order tracks to hit duration & optimize flow) →
+5. **explainPlanLLM** (rationale for track selection) →
+6. **validate** (duration tolerance, existence, duplicates) →
+7. **finalize** → **export** to Rekordbox/Serato
 
-```typescript
-const planner = new DayPlanner();
-planner.addActivity('Morning Jog', 2);
-planner.addActivity('Math Homework', 4);
-await llm.requestAssignmentsFromLLM(planner);
-```
+*(AI off):* `createPlan` uses deterministic heuristics and the same validators.
 
-### 3. Mixed Scheduling
-Combines manual assignments with AI assistance for remaining activities.
+## ✅ Validation & Safety Rails
 
-## Sample Output
+- **Duration tolerance** (e.g., ±5 min around target)
+- **No duplicates** and **all tracks exist** in the catalog
+- Structured LLM prompts request **JSON-only** outputs with robust parsing & fallbacks to deterministic logic
 
-```
-📅 Daily Schedule
-==================
-7:00 AM - Breakfast (30 min)
-8:00 AM - Morning Workout (1 hours)
-10:00 AM - Study Session (1.5 hours)
-1:00 PM - Lunch (30 min)
-3:00 PM - Team Meeting (1 hours)
-7:00 PM - Dinner (30 min)
-9:00 PM - Evening Reading (1 hours)
+## 🎨 User Experience
 
-📋 Unassigned Activities
-========================
-All activities are assigned!
-```
+- DJ lands on **Discovery**, enters an event description and seeds, and reviews a proposed crate
+- They can reprompt or issue targeted revisions ("swap the mid-set lull," "cap at 126 BPM")
+- After approval, the crate is saved to **Library** and **exported**
+- During performance, better track flow and energy progression → smoother set
 
-## Key Features
+## 🌟 What Makes It Different
 
-- **Simple State Management**: Activities and assignments stored in memory
-- **Flexible Time System**: Half-hour slots from midnight (0-47)
-- **Query-Based Display**: Schedule generated on-demand, not stored sorted
-- **AI Integration**: Hardwired preferences in LLM prompt (no external hints)
-- **Conflict Detection**: Prevents overlapping activities
-- **Clean Architecture**: First principles implementation with no legacy code
+- **Human-in-the-loop**: Keeps the DJ's style central; AI accelerates, doesn't replace
+- **Mix-aware planning**: Not just "similar tracks"—explicitly optimizes energy flow and track progression
+- **Operational compatibility**: Produces playlists that drop into standard DJ software
 
-## LLM Preferences (Hardwired)
+## ⚠️ Risks & Limitations (and Mitigations)
 
-The AI uses these built-in preferences:
-- Exercise activities: Morning (6:00 AM - 10:00 AM)
-- Study/Classes: Focused hours (9:00 AM - 5:00 PM)
-- Meals: Regular intervals (breakfast 7-9 AM, lunch 12-1 PM, dinner 6-8 PM)
-- Social/Relaxation: Evenings (6:00 PM - 10:00 PM)
-- Avoid: Demanding activities after 10:00 PM
+- **Metadata quality variance:** Track keys/BPM may be noisy → allow manual overrides; add auto-validators; encourage verified sources
+- **LLM brittleness:** Non-JSON or off-spec responses → strict schemas, retries, and graceful deterministic fallbacks
+- **Style drift:** AI suggestions may miss a DJ's "voice" → seed-driven planning + revision prompts + feedback memory
+- **Catalog coverage:** If the local library is thin, discovery may be limited → future integrations with external catalogs
 
-## Troubleshooting
+## 📈 Success Metrics
 
-### "Could not load config.json"
-- Ensure `config.json` exists with your API key
-- Check JSON format is correct
+- **Prep time reduction** (minutes vs baseline hours)
+- **User satisfaction** (revision count to acceptance, thumbs-up rate)
+- **Adoption** (export count, repeat usage, crate reuse)
 
-### "Error calling Gemini API"
-- Verify API key is correct
-- Check internet connection
-- Ensure API access is enabled in Google AI Studio
+## 🗺️ Near-term Roadmap
 
-### Build Issues
-- Use `npm run build` to compile TypeScript
-- Check that all dependencies are installed with `npm install`
+1. **Phrase alignment v1:** Basic section detection to encourage 16/32-bar swaps
+2. **Energy modeling:** Learn DJ-specific energy curves from feedback
+3. **Adaptive prompting:** Auto-tune prompt variants based on failure cases
+4. **Import pipelines:** Easier ingest from Beatport/Beatsource/record pools
+5. **Deeper export:** Hot cue/beat grid hints (where metadata allows)
 
-## Next Steps
+## 🎪 Demo Scenarios
 
-Try extending the DayPlanner:
-- Add weekly scheduling
-- Implement activity categories
-- Add location information
-- Create a web interface
-- Add conflict resolution strategies
-- Implement recurring activities
+### Scenario A
+"Rooftop sunset • tech house • 120–124 BPM • 90 min" with 3 seeds → show ordered crate and concise rationale.
 
-## Resources
+### Scenario B
+Apply a revision ("avoid Artist X, raise energy sooner") and re-validate.
 
-- [Google Generative AI Documentation](https://ai.google.dev/docs)
-- [TypeScript Documentation](https://www.typescriptlang.org/docs/)
+### Scenario C (AI off)
+Manual plan + a validator failure (duration mismatch) → fix and finalize.
+
+## 🚀 Getting Started
+
+[Installation and setup instructions would go here]
+
+## 📝 License
+
+[License information would go here]

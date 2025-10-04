@@ -2,7 +2,7 @@
  * DayPlanner Concept - AI Augmented Version
  */
 
-import { GeminiLLM } from './gemini-llm';
+import { GeminiLLM } from './src/llm/gemini-llm';
 
 // A single activity that can be scheduled
 export interface Activity {

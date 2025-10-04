@@ -5,7 +5,7 @@
  */
 
 import { DayPlanner } from './dayplanner';
-import { GeminiLLM, Config } from './gemini-llm';
+import { GeminiLLM, Config } from './src/llm/gemini-llm';
 
 /**
  * Load configuration from config.json
