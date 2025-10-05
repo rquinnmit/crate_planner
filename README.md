@@ -130,7 +130,81 @@ Manual plan + a validator failure (duration mismatch) → fix and finalize.
 
 ## 🚀 Getting Started
 
-[Installation and setup instructions would go here]
+### Installation
+
+```bash
+# Clone the repository
+git clone <repository-url>
+cd crate_planner
+
+# Install dependencies
+npm install
+
+# Build the project
+npm run build
+```
+
+### Quick Start: Import Tracks from Spotify
+
+CratePilot now supports importing track data from Spotify Web API, including BPM, key (Camelot notation), energy, and more.
+
+**1. Get Spotify API credentials** (2 minutes):
+- Go to [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)
+- Create a new app
+- Copy your Client ID and Client Secret
+
+**2. Set environment variables**:
+```bash
+# Windows PowerShell
+$env:SPOTIFY_CLIENT_ID="your_client_id"
+$env:SPOTIFY_CLIENT_SECRET="your_client_secret"
+
+# Linux/Mac
+export SPOTIFY_CLIENT_ID="your_client_id"
+export SPOTIFY_CLIENT_SECRET="your_client_secret"
+```
+
+**3. Import tracks**:
+```typescript
+import { MusicAssetCatalog } from './src/core/catalog';
+import { SpotifyImporter } from './src/import/spotify_importer';
+
+const catalog = new MusicAssetCatalog();
+const importer = new SpotifyImporter(catalog, {
+    clientId: process.env.SPOTIFY_CLIENT_ID!,
+    clientSecret: process.env.SPOTIFY_CLIENT_SECRET!,
+    baseURL: 'https://api.spotify.com/v1'
+});
+
+// Import 20 techno tracks
+const result = await importer.searchAndImport('genre:techno', 20);
+console.log(`Imported ${result.tracksImported} tracks`);
+```
+
+**4. Run examples**:
+```bash
+npm run example:spotify
+```
+
+### Testing
+
+```bash
+# Run all tests
+npm test
+
+# Test Spotify importer
+npm run test:spotify
+
+# Test crate planner
+npm run test:planner
+```
+
+### Documentation
+
+- **[Spotify Setup Guide](docs/SPOTIFY_SETUP.md)** - Quick 5-minute setup
+- **[Spotify Import Guide](docs/SPOTIFY_IMPORT_GUIDE.md)** - Complete API reference
+- **[Import Module README](src/import/README.md)** - Technical details
+- **[Export Module README](src/export/README.md)** - Export to DJ software
 
 ## 📝 License
 

@@ -8,7 +8,7 @@
  *   - Scenario C: Manual planning with validation
  */
 
-import { CratePlanner } from '../src/core/crate_planner';
+import { CratePlanner, CratePrompt } from '../src/core/crate_planner';
 import { MusicAssetCatalog } from '../src/core/catalog';
 import { Track, CamelotKey } from '../src/core/track';
 import { GeminiLLM, Config } from '../src/llm/gemini-llm';
@@ -247,46 +247,84 @@ export async function testManualCratePlanning(): Promise<void> {
     // Manually select and sequence tracks (intentionally create duration mismatch)
     console.log('🎵 Manually selecting tracks from catalog...');
     console.log('   Selected 6 tracks for a 60-minute target (but will be too short)');
-    // TODO: Get tracks from catalog
-    // const track1 = catalog.getTrack('sunset-vibes-001');      // 6 min
-    // const track2 = catalog.getTrack('deep-groove-002');       // 5.5 min
-    // const track3 = catalog.getTrack('evening-flow-003');      // 5.75 min
-    // const track4 = catalog.getTrack('golden-hour-005');       // 6.5 min
-    // const track5 = catalog.getTrack('horizon-pulse-006');     // 6 min
-    // const track6 = catalog.getTrack('afterglow-012');         // 5.75 min
-    // Total: ~35 minutes (too short for 60-minute target)
     
-    console.log('\n🎧 Manually sequencing tracks...');
-    // TODO: Add tracks to crate in specific order
-    // planner.addTrackToCrate(track1);
-    // planner.addTrackToCrate(track2);
-    // planner.addTrackToCrate(track3);
-    // ... etc
+    // Create initial crate with too few tracks (will fail validation)
+    const shortTrackList = [
+        'sunset-vibes-001',      // 6 min
+        'deep-groove-002',       // 5.5 min
+        'evening-flow-003',      // 5.75 min
+        'golden-hour-005',       // 6.5 min
+        'horizon-pulse-006',     // 6 min
+        'afterglow-012'          // 5.75 min
+    ];
+    // Total: ~35.5 minutes (too short for 60-minute target)
+    
+    console.log('\n🎧 Creating initial plan with manual selection...');
+    const initialPlan = planner.createPlan(
+        {
+            targetDuration: 3600, // 60 minutes
+            tempoRange: { min: 120, max: 124 },
+            targetGenre: 'Tech House'
+        },
+        shortTrackList.slice(0, 3) // Use first 3 as seeds
+    );
     
     console.log('\n❌ Validating crate (expecting failure)...');
     console.log('   Target duration: 60 minutes (±5 min tolerance)');
-    // TODO: Run validation (expect duration failure)
-    // const validationResults = planner.validateCrate();
-    // Expected output: "Duration 35min is outside tolerance (target: 60min ± 5min)"
+    const validationResult = planner.validate(initialPlan, 300); // 5 min tolerance
+    
+    if (validationResult.isValid) {
+        console.log('   ⚠️  Warning: Expected validation failure but plan passed');
+    } else {
+        console.log('   ✓ Validation failed as expected:');
+        validationResult.errors.forEach(err => console.log(`     - ${err}`));
+    }
     
     console.log('\n🔧 Fixing validation issues...');
-    console.log('   Adding more tracks to reach target duration...');
-    // TODO: Fix issues by adding more tracks
-    // planner.addTrackToCrate(catalog.getTrack('rooftop-rhythm-004'));  // +6.25 min
-    // planner.addTrackToCrate(catalog.getTrack('peak-moment-007'));     // +7 min
-    // planner.addTrackToCrate(catalog.getTrack('twilight-fade-010'));   // +6.25 min
-    // New total: ~60 minutes
+    console.log('   Creating new plan with more tracks to reach target duration...');
+    
+    // Create a new plan with more tracks
+    const fullTrackList = [
+        'sunset-vibes-001',
+        'deep-groove-002',
+        'evening-flow-003',
+        'rooftop-rhythm-004',
+        'golden-hour-005',
+        'horizon-pulse-006',
+        'peak-moment-007',
+        'twilight-fade-010',
+        'afterglow-012'
+    ];
+    
+    const fixedPlan = planner.createPlan(
+        {
+            targetDuration: 3600,
+            tempoRange: { min: 120, max: 124 },
+            targetGenre: 'Tech House'
+        },
+        fullTrackList.slice(0, 3)
+    );
     
     console.log('\n✅ Re-validating after fix...');
-    // TODO: Re-run validation
-    // const newValidation = planner.validateCrate();
-    // Expected: Validation passes
+    const newValidation = planner.validate(fixedPlan, 300);
+    
+    if (newValidation.isValid) {
+        console.log('   ✓ Validation passed!');
+    } else {
+        console.log('   Validation errors:');
+        newValidation.errors.forEach(err => console.log(`     - ${err}`));
+    }
+    
+    console.log('\n📋 Finalizing the plan...');
+    try {
+        planner.finalize(fixedPlan);
+        console.log('   ✓ Plan finalized successfully');
+    } catch (error) {
+        console.log(`   ❌ Finalization failed: ${(error as Error).message}`);
+    }
     
     console.log('\n📋 Final crate (validated):');
-    console.log('   Total duration: ~60 minutes');
-    console.log('   Tracks: 9');
-    // TODO: Display final crate
-    // planner.displayCrate();
+    planner.displayCrate();
 }
 
 /**
@@ -314,41 +352,60 @@ export async function testAICratePlanning(): Promise<void> {
     console.log('   - Deep Groove (Deep Groove)');
     console.log('   - Evening Flow (Flow Masters)\n');
     
-    // TODO: Create structured prompt
-    // const prompt: CratePrompt = {
-    //     eventDescription: "Rooftop sunset • tech house • 120–124 BPM • 90 min",
-    //     seedTracks: ['sunset-vibes-001', 'deep-groove-002', 'evening-flow-003'],
-    //     constraints: {
-    //         tempoRange: { min: 120, max: 124 },
-    //         genre: 'Tech House',
-    //         targetDuration: 90 * 60, // 90 minutes in seconds
-    //         notes: "Smooth energy build, sunset vibes"
-    //     }
-    // };
+    const prompt: CratePrompt = {
+        tempoRange: { min: 120, max: 124 },
+        targetGenre: 'Tech House',
+        targetDuration: 90 * 60, // 90 minutes in seconds
+        notes: 'Rooftop sunset • tech house • 120–124 BPM • 90 min - Smooth energy build, sunset vibes'
+    };
     
-    console.log('🤖 Step 1: Deriving intent from prompt...');
-    // TODO: Call deriveIntentLLM
-    // const intent = await planner.deriveIntentLLM(prompt, llm);
+    const seedTracks = ['sunset-vibes-001', 'deep-groove-002', 'evening-flow-003'];
     
-    console.log('🎵 Step 2: Generating candidate pool...');
-    // TODO: Call generateCandidatePoolLLM
-    // const candidates = await planner.generateCandidatePoolLLM(intent, llm);
-    
-    console.log('🎧 Step 3: Sequencing tracks with AI...');
-    // TODO: Call sequencePlanLLM
-    // const plan = await planner.sequencePlanLLM(candidates, intent, llm);
-    
-    console.log('💡 Step 4: Generating explanations...');
-    // TODO: Call explainPlanLLM
-    // const explanations = await planner.explainPlanLLM(plan, llm);
-    
-    console.log('✅ Step 5: Validating crate...');
-    // TODO: Run validation
-    // const validationResults = planner.validateCrate();
-    
-    console.log('\n📋 Final AI-generated crate:');
-    // TODO: Display crate with explanations
-    // planner.displayCrate();
+    try {
+        console.log('🤖 Step 1: Deriving intent from prompt...');
+        const intent = await planner.deriveIntentLLM(prompt, seedTracks, llm);
+        console.log('   ✓ Intent derived:');
+        console.log(`     - Mix Style: ${intent.mixStyle}`);
+        console.log(`     - Energy Curve: ${intent.energyCurve}`);
+        console.log(`     - BPM Range: ${intent.tempoRange.min}-${intent.tempoRange.max}`);
+        console.log(`     - Target Genres: ${intent.targetGenres.join(', ')}`);
+        
+        console.log('\n🎵 Step 2: Generating candidate pool...');
+        const pool = await planner.generateCandidatePoolLLM(intent, llm);
+        console.log(`   ✓ Generated pool with ${pool.tracks.size} candidate tracks`);
+        console.log(`     Reasoning: ${pool.filtersApplied}`);
+        
+        console.log('\n🎧 Step 3: Sequencing tracks with AI...');
+        const plan = await planner.sequencePlanLLM(intent, pool, seedTracks, llm);
+        console.log(`   ✓ Sequenced ${plan.trackList.length} tracks`);
+        console.log(`     Total Duration: ${Math.floor(plan.totalDuration / 60)} minutes`);
+        
+        console.log('\n💡 Step 4: Generating explanations...');
+        const explainedPlan = await planner.explainPlanLLM(plan, llm);
+        console.log('   ✓ Explanations generated');
+        
+        console.log('\n✅ Step 5: Validating crate...');
+        const validation = planner.validate(explainedPlan, 300);
+        if (validation.isValid) {
+            console.log('   ✓ Validation passed!');
+        } else {
+            console.log('   Validation issues:');
+            validation.errors.forEach(err => console.log(`     - ${err}`));
+        }
+        
+        console.log('\n📋 Final AI-generated crate:');
+        planner.displayCrate();
+        
+    } catch (error) {
+        console.error(`\n❌ AI Planning failed: ${(error as Error).message}`);
+        console.log('\nNote: This test requires a valid Gemini API key in config/config.json');
+        console.log('Falling back to manual planning...\n');
+        
+        // Fallback to manual planning
+        const manualPlan = planner.createPlan(prompt, seedTracks);
+        console.log('📋 Manual fallback plan:');
+        planner.displayCrate();
+    }
 }
 
 /**
@@ -367,31 +424,81 @@ export async function testCrateRevision(): Promise<void> {
     const config = loadConfig();
     const llm = new GeminiLLM(config);
     
-    // Start with an initial AI-generated crate (that includes Artist X tracks)
-    console.log('🎵 Generating initial crate with seed tracks...');
+    // Start with an initial crate that includes Artist X tracks
+    console.log('🎵 Creating initial crate...');
     console.log('   (Initial crate intentionally includes tracks by "Artist X")');
-    // TODO: Create initial crate (similar to Scenario A)
+    
+    const prompt: CratePrompt = {
+        tempoRange: { min: 120, max: 124 },
+        targetGenre: 'Tech House',
+        targetDuration: 60 * 60,
+        notes: 'Tech house set with gradual energy build'
+    };
+    
+    // Create initial plan that might include Artist X tracks
+    const seedTracks = ['sunset-vibes-001', 'artist-x-track-016', 'evening-flow-003'];
+    const initialPlan = planner.createPlan(prompt, seedTracks);
     
     console.log('\n📋 Initial crate:');
-    // TODO: Display initial crate
-    // planner.displayCrate();
+    console.log(`   Tracks: ${initialPlan.trackList.length}`);
+    console.log(`   Duration: ${Math.floor(initialPlan.totalDuration / 60)} minutes`);
     
-    // Apply revision (matches README Scenario B exactly)
-    console.log('\n🔧 User Revision Request:');
-    console.log('   "Avoid Artist X, raise energy sooner"');
-    console.log('\n🤖 Processing revision...');
-    // TODO: Call revisePlanLLM
-    // const revisedPlan = await planner.revisePlanLLM(
-    //     "Avoid tracks by Artist X and raise energy earlier in the set",
-    //     llm
-    // );
+    // Check if Artist X is in the crate
+    const hasArtistX = initialPlan.trackList.some(id => {
+        const track = catalog.getTrack(id);
+        return track?.artist === 'Artist X';
+    });
+    console.log(`   Contains Artist X tracks: ${hasArtistX ? 'Yes' : 'No'}`);
     
-    console.log('\n✅ Re-validating revised crate...');
-    // TODO: Validate revised crate
-    
-    console.log('\n📋 Revised crate:');
-    // TODO: Display revised crate with changes highlighted
-    // planner.displayCrateWithChanges();
+    try {
+        // Apply revision (matches README Scenario B exactly)
+        console.log('\n🔧 User Revision Request:');
+        console.log('   "Avoid Artist X, raise energy sooner"');
+        console.log('\n🤖 Processing revision with LLM...');
+        
+        const revisedPlan = await planner.revisePlanLLM(
+            initialPlan,
+            'Avoid tracks by Artist X and raise energy earlier in the set',
+            llm
+        );
+        
+        console.log('   ✓ Revision complete');
+        console.log(`   Changes: ${revisedPlan.annotations}`);
+        
+        // Check if Artist X has been removed
+        const stillHasArtistX = revisedPlan.trackList.some(id => {
+            const track = catalog.getTrack(id);
+            return track?.artist === 'Artist X';
+        });
+        console.log(`   Artist X removed: ${!stillHasArtistX ? 'Yes' : 'No'}`);
+        
+        console.log('\n✅ Re-validating revised crate...');
+        const validation = planner.validate(revisedPlan, 300);
+        if (validation.isValid) {
+            console.log('   ✓ Validation passed!');
+        } else {
+            console.log('   Validation issues:');
+            validation.errors.forEach(err => console.log(`     - ${err}`));
+        }
+        
+        console.log('\n📋 Revised crate:');
+        planner.displayCrate();
+        
+    } catch (error) {
+        console.error(`\n❌ Revision failed: ${(error as Error).message}`);
+        console.log('\nNote: This test requires a valid Gemini API key in config/config.json');
+        console.log('Manual revision demonstration:\n');
+        
+        // Manual revision: filter out Artist X
+        const manuallyRevisedTrackList = initialPlan.trackList.filter(id => {
+            const track = catalog.getTrack(id);
+            return track?.artist !== 'Artist X';
+        });
+        
+        console.log(`   Manually removed Artist X tracks`);
+        console.log(`   Original: ${initialPlan.trackList.length} tracks`);
+        console.log(`   Revised: ${manuallyRevisedTrackList.length} tracks`);
+    }
 }
 
 /**
@@ -401,6 +508,7 @@ export async function testCrateRevision(): Promise<void> {
 export async function testMixedModePlanning(): Promise<void> {
     console.log('\n🧪 TEST CASE 4: Mixed Mode Planning');
     console.log('====================================');
+    console.log('Demo: Manual opener → AI continuation\n');
     
     const catalog = initializeSampleCatalog();
     const planner = new CratePlanner(catalog);
@@ -408,33 +516,64 @@ export async function testMixedModePlanning(): Promise<void> {
     const llm = new GeminiLLM(config);
     
     // Manually set opening tracks
-    console.log('🎧 Manually setting opening sequence...');
-    // TODO: Add specific opening tracks
-    // const openingTrack = catalog.getTrack('sunset-intro-001');
-    // const buildupTrack = catalog.getTrack('gentle-rise-002');
-    // planner.addTrackToCrate(openingTrack);
-    // planner.addTrackToCrate(buildupTrack);
+    console.log('🎧 Manually selecting opening sequence...');
+    console.log('   Opener: Sunset Vibes');
+    console.log('   Second: Deep Groove');
+    console.log('   Third: Evening Flow');
     
-    console.log('\n📋 Partial crate after manual selection:');
-    // TODO: Display partial crate
-    // planner.displayCrate();
+    const manualOpeners = [
+        'sunset-vibes-001',
+        'deep-groove-002',
+        'evening-flow-003'
+    ];
     
-    // Let AI fill the remaining slots
-    console.log('\n🤖 Filling remaining slots with AI...');
-    // TODO: Create prompt for remaining tracks
-    // const remainingPrompt = {
-    //     eventDescription: "Continue from opening, build to peak, then wind down",
-    //     existingTracks: planner.getCurrentTracks(),
-    //     constraints: {
-    //         tempoRange: { min: 120, max: 126 },
-    //         targetDuration: 75 * 60, // Remaining time
-    //     }
-    // };
-    // await planner.fillRemainingTracksLLM(remainingPrompt, llm);
-    
-    console.log('\n📋 Final mixed-mode crate:');
-    // TODO: Display final crate
-    // planner.displayCrate();
+    try {
+        console.log('\n🤖 Using AI to complete the set...');
+        
+        // Create a prompt for the full set
+        const fullPrompt: CratePrompt = {
+            tempoRange: { min: 120, max: 126 },
+            targetGenre: 'Tech House',
+            targetDuration: 75 * 60, // 75 minutes total
+            notes: 'Continue from smooth opening, build to peak, then wind down'
+        };
+        
+        // Use LLM to derive intent and generate the rest
+        const intent = await planner.deriveIntentLLM(fullPrompt, manualOpeners, llm);
+        console.log(`   ✓ Intent derived with ${intent.mixStyle} mix style`);
+        
+        const pool = await planner.generateCandidatePoolLLM(intent, llm);
+        console.log(`   ✓ Candidate pool: ${pool.tracks.size} tracks`);
+        
+        const completePlan = await planner.sequencePlanLLM(intent, pool, manualOpeners, llm);
+        console.log(`   ✓ Complete plan: ${completePlan.trackList.length} tracks`);
+        
+        // Verify manual openers are included
+        const openerCount = manualOpeners.filter(id => 
+            completePlan.trackList.includes(id)
+        ).length;
+        console.log(`   Manual openers included: ${openerCount}/${manualOpeners.length}`);
+        
+        console.log('\n📋 Final mixed-mode crate:');
+        planner.displayCrate();
+        
+    } catch (error) {
+        console.error(`\n❌ Mixed mode planning failed: ${(error as Error).message}`);
+        console.log('\nNote: This test requires a valid Gemini API key in config/config.json');
+        console.log('Falling back to manual planning...\n');
+        
+        // Fallback: create a plan with the manual openers as seeds
+        const fallbackPrompt: CratePrompt = {
+            tempoRange: { min: 120, max: 126 },
+            targetGenre: 'Tech House',
+            targetDuration: 75 * 60
+        };
+        
+        const fallbackPlan = planner.createPlan(fallbackPrompt, manualOpeners);
+        console.log('📋 Fallback plan with manual openers:');
+        console.log(`   Total tracks: ${fallbackPlan.trackList.length}`);
+        console.log(`   Duration: ${Math.floor(fallbackPlan.totalDuration / 60)} minutes`);
+    }
 }
 
 /**

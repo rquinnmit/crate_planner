@@ -1,0 +1,162 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "DJ Genre metadata including typical BPM ranges, energy characteristics, and mixing guidelines",
+  "genres": [
+    {
+      "name": "Tech House",
+      "bpmRange": { "min": 120, "max": 130 },
+      "typicalEnergy": 3,
+      "description": "Groovy, hypnotic house music with techno influences",
+      "characteristics": ["Driving basslines", "Minimal vocals", "Percussive elements"],
+      "mixingTips": "Focus on groove and rhythm matching. Works well with gradual energy builds.",
+      "popularSubgenres": ["Minimal Tech House", "Deep Tech", "Peak Time Tech House"],
+      "compatibleGenres": ["Deep House", "Techno", "Minimal"]
+    },
+    {
+      "name": "Deep House",
+      "bpmRange": { "min": 115, "max": 125 },
+      "typicalEnergy": 2,
+      "description": "Soulful, atmospheric house with deep basslines and jazzy elements",
+      "characteristics": ["Warm pads", "Jazzy chords", "Soulful vocals", "Deep bass"],
+      "mixingTips": "Emphasize smooth transitions and harmonic mixing. Great for opening sets.",
+      "popularSubgenres": ["Afro House", "Melodic Deep House", "Organic House"],
+      "compatibleGenres": ["Tech House", "Progressive House", "Afro House"]
+    },
+    {
+      "name": "Techno",
+      "bpmRange": { "min": 125, "max": 135 },
+      "typicalEnergy": 4,
+      "description": "Driving, repetitive electronic music with industrial influences",
+      "characteristics": ["Heavy kicks", "Hypnotic loops", "Industrial sounds", "Dark atmosphere"],
+      "mixingTips": "Long blends work well. Focus on energy progression and tension building.",
+      "popularSubgenres": ["Peak Time Techno", "Melodic Techno", "Industrial Techno", "Minimal Techno"],
+      "compatibleGenres": ["Tech House", "Hard Techno", "Minimal"]
+    },
+    {
+      "name": "House",
+      "bpmRange": { "min": 120, "max": 130 },
+      "typicalEnergy": 3,
+      "description": "Classic four-on-the-floor dance music with soulful and funky elements",
+      "characteristics": ["Four-on-the-floor kick", "Disco samples", "Uplifting vocals", "Funky basslines"],
+      "mixingTips": "Versatile genre. Works with most house subgenres. Focus on energy matching.",
+      "popularSubgenres": ["Jackin House", "Soulful House", "Funky House", "Classic House"],
+      "compatibleGenres": ["Deep House", "Tech House", "Disco", "Funk"]
+    },
+    {
+      "name": "Progressive House",
+      "bpmRange": { "min": 120, "max": 128 },
+      "typicalEnergy": 3,
+      "description": "Melodic, atmospheric house with long buildups and emotional breakdowns",
+      "characteristics": ["Melodic progressions", "Long buildups", "Emotional breakdowns", "Layered synths"],
+      "mixingTips": "Allow tracks to develop. Long mixes work best. Focus on melodic compatibility.",
+      "popularSubgenres": ["Melodic Progressive", "Organic Progressive", "Deep Progressive"],
+      "compatibleGenres": ["Deep House", "Melodic Techno", "Trance"]
+    },
+    {
+      "name": "Melodic Techno",
+      "bpmRange": { "min": 120, "max": 128 },
+      "typicalEnergy": 3,
+      "description": "Emotional techno with strong melodic elements and atmospheric pads",
+      "characteristics": ["Emotional melodies", "Atmospheric pads", "Driving basslines", "Ethereal vocals"],
+      "mixingTips": "Focus on harmonic mixing and emotional flow. Great for peak moments.",
+      "popularSubgenres": ["Organic Melodic", "Deep Melodic", "Progressive Melodic"],
+      "compatibleGenres": ["Progressive House", "Techno", "Deep House"]
+    },
+    {
+      "name": "Afro House",
+      "bpmRange": { "min": 115, "max": 125 },
+      "typicalEnergy": 3,
+      "description": "African-influenced house with tribal percussion and organic sounds",
+      "characteristics": ["Tribal percussion", "African vocals", "Organic instruments", "Warm basslines"],
+      "mixingTips": "Emphasize percussion and rhythm. Works well with organic, earthy vibes.",
+      "popularSubgenres": ["Afro Tech", "Organic Afro", "Tribal House"],
+      "compatibleGenres": ["Deep House", "Organic House", "Tech House"]
+    },
+    {
+      "name": "Minimal",
+      "bpmRange": { "min": 120, "max": 130 },
+      "typicalEnergy": 2,
+      "description": "Stripped-back electronic music focusing on subtle changes and groove",
+      "characteristics": ["Sparse arrangements", "Subtle changes", "Deep grooves", "Micro-house elements"],
+      "mixingTips": "Focus on groove and subtle transitions. Less is more.",
+      "popularSubgenres": ["Minimal Deep Tech", "Microhouse", "Minimal Techno"],
+      "compatibleGenres": ["Tech House", "Deep House", "Techno"]
+    },
+    {
+      "name": "Bass House",
+      "bpmRange": { "min": 125, "max": 135 },
+      "typicalEnergy": 5,
+      "description": "High-energy house with heavy, distorted basslines and festival vibes",
+      "characteristics": ["Heavy bass", "Distorted synths", "Festival energy", "Big drops"],
+      "mixingTips": "Energy is key. Quick transitions work well. Focus on drop timing.",
+      "popularSubgenres": ["G-House", "UK Bass House", "Festival Bass House"],
+      "compatibleGenres": ["Tech House", "Electro House", "Dubstep"]
+    },
+    {
+      "name": "Electro House",
+      "bpmRange": { "min": 125, "max": 135 },
+      "typicalEnergy": 4,
+      "description": "Energetic house with electro influences and big room sound",
+      "characteristics": ["Electro synths", "Big room sound", "Heavy drops", "Festival energy"],
+      "mixingTips": "Focus on energy peaks and drops. Works well in peak time sets.",
+      "popularSubgenres": ["Big Room", "Festival House", "Dutch House"],
+      "compatibleGenres": ["Bass House", "Progressive House", "Techno"]
+    },
+    {
+      "name": "Trance",
+      "bpmRange": { "min": 128, "max": 145 },
+      "typicalEnergy": 4,
+      "description": "Uplifting, melodic electronic music with emotional buildups and breakdowns",
+      "characteristics": ["Uplifting melodies", "Long buildups", "Emotional breakdowns", "Arpeggiated synths"],
+      "mixingTips": "Long mixes essential. Focus on energy flow and emotional journey.",
+      "popularSubgenres": ["Uplifting Trance", "Progressive Trance", "Psytrance", "Tech Trance"],
+      "compatibleGenres": ["Progressive House", "Techno", "Hard Trance"]
+    },
+    {
+      "name": "Drum & Bass",
+      "bpmRange": { "min": 160, "max": 180 },
+      "typicalEnergy": 5,
+      "description": "Fast-paced breakbeat music with heavy bass and complex drum patterns",
+      "characteristics": ["Fast breakbeats", "Heavy sub-bass", "Complex rhythms", "High energy"],
+      "mixingTips": "Precise beatmatching crucial. Focus on bass and drum patterns.",
+      "popularSubgenres": ["Liquid DnB", "Neurofunk", "Jump Up", "Jungle"],
+      "compatibleGenres": ["Jungle", "Dubstep", "Breakbeat"]
+    },
+    {
+      "name": "Dubstep",
+      "bpmRange": { "min": 135, "max": 145 },
+      "typicalEnergy": 5,
+      "description": "Bass-heavy electronic music with wobbles and half-time rhythms",
+      "characteristics": ["Wobble bass", "Half-time rhythms", "Heavy drops", "Sub-bass"],
+      "mixingTips": "Focus on drop timing and bass energy. Works well with dramatic transitions.",
+      "popularSubgenres": ["Brostep", "Riddim", "Deep Dubstep", "Melodic Dubstep"],
+      "compatibleGenres": ["Drum & Bass", "Bass House", "Trap"]
+    },
+    {
+      "name": "Disco",
+      "bpmRange": { "min": 110, "max": 130 },
+      "typicalEnergy": 3,
+      "description": "Funky, groovy dance music from the 70s with modern edits and remixes",
+      "characteristics": ["Funky basslines", "String sections", "Four-on-the-floor", "Disco drums"],
+      "mixingTips": "Focus on groove and funk. Works great with house music.",
+      "popularSubgenres": ["Nu-Disco", "Disco House", "Italo Disco", "Boogie"],
+      "compatibleGenres": ["House", "Funk", "Nu-Disco"]
+    },
+    {
+      "name": "Breaks",
+      "bpmRange": { "min": 125, "max": 140 },
+      "typicalEnergy": 4,
+      "description": "Breakbeat-driven electronic music with funky, syncopated rhythms",
+      "characteristics": ["Breakbeats", "Funky rhythms", "Bass-heavy", "Syncopation"],
+      "mixingTips": "Focus on break patterns and energy. Creative mixing opportunities.",
+      "popularSubgenres": ["Nu-Breaks", "Progressive Breaks", "Tech Breaks"],
+      "compatibleGenres": ["Drum & Bass", "House", "Techno"]
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0",
+    "lastUpdated": "2025-01-01",
+    "totalGenres": 15,
+    "notes": "BPM ranges are typical values and may vary. Energy levels are on a 1-5 scale."
+  }
+}

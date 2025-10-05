@@ -1,0 +1,253 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Camelot Wheel key compatibility mappings for harmonic mixing. Each key maps to its compatible keys for smooth DJ transitions.",
+  "camelotWheel": {
+    "1A": {
+      "musicalKey": "A♭ minor",
+      "compatible": ["1A", "1B", "2A", "12A"],
+      "perfect": ["1A"],
+      "relative": ["1B"],
+      "adjacent": ["2A", "12A"],
+      "energyBoost": ["1B"],
+      "notes": "Same key (1A), relative major (1B), adjacent keys for smooth transitions"
+    },
+    "1B": {
+      "musicalKey": "B major",
+      "compatible": ["1B", "1A", "2B", "12B"],
+      "perfect": ["1B"],
+      "relative": ["1A"],
+      "adjacent": ["2B", "12B"],
+      "energyBoost": ["2B"],
+      "notes": "Same key (1B), relative minor (1A), adjacent keys for smooth transitions"
+    },
+    "2A": {
+      "musicalKey": "E♭ minor",
+      "compatible": ["2A", "2B", "3A", "1A"],
+      "perfect": ["2A"],
+      "relative": ["2B"],
+      "adjacent": ["3A", "1A"],
+      "energyBoost": ["2B"],
+      "notes": "Same key (2A), relative major (2B), adjacent keys for smooth transitions"
+    },
+    "2B": {
+      "musicalKey": "F♯ major / G♭ major",
+      "compatible": ["2B", "2A", "3B", "1B"],
+      "perfect": ["2B"],
+      "relative": ["2A"],
+      "adjacent": ["3B", "1B"],
+      "energyBoost": ["3B"],
+      "notes": "Same key (2B), relative minor (2A), adjacent keys for smooth transitions"
+    },
+    "3A": {
+      "musicalKey": "B♭ minor",
+      "compatible": ["3A", "3B", "4A", "2A"],
+      "perfect": ["3A"],
+      "relative": ["3B"],
+      "adjacent": ["4A", "2A"],
+      "energyBoost": ["3B"],
+      "notes": "Same key (3A), relative major (3B), adjacent keys for smooth transitions"
+    },
+    "3B": {
+      "musicalKey": "D♭ major",
+      "compatible": ["3B", "3A", "4B", "2B"],
+      "perfect": ["3B"],
+      "relative": ["3A"],
+      "adjacent": ["4B", "2B"],
+      "energyBoost": ["4B"],
+      "notes": "Same key (3B), relative minor (3A), adjacent keys for smooth transitions"
+    },
+    "4A": {
+      "musicalKey": "F minor",
+      "compatible": ["4A", "4B", "5A", "3A"],
+      "perfect": ["4A"],
+      "relative": ["4B"],
+      "adjacent": ["5A", "3A"],
+      "energyBoost": ["4B"],
+      "notes": "Same key (4A), relative major (4B), adjacent keys for smooth transitions"
+    },
+    "4B": {
+      "musicalKey": "A♭ major",
+      "compatible": ["4B", "4A", "5B", "3B"],
+      "perfect": ["4B"],
+      "relative": ["4A"],
+      "adjacent": ["5B", "3B"],
+      "energyBoost": ["5B"],
+      "notes": "Same key (4B), relative minor (4A), adjacent keys for smooth transitions"
+    },
+    "5A": {
+      "musicalKey": "C minor",
+      "compatible": ["5A", "5B", "6A", "4A"],
+      "perfect": ["5A"],
+      "relative": ["5B"],
+      "adjacent": ["6A", "4A"],
+      "energyBoost": ["5B"],
+      "notes": "Same key (5A), relative major (5B), adjacent keys for smooth transitions"
+    },
+    "5B": {
+      "musicalKey": "E♭ major",
+      "compatible": ["5B", "5A", "6B", "4B"],
+      "perfect": ["5B"],
+      "relative": ["5A"],
+      "adjacent": ["6B", "4B"],
+      "energyBoost": ["6B"],
+      "notes": "Same key (5B), relative minor (5A), adjacent keys for smooth transitions"
+    },
+    "6A": {
+      "musicalKey": "G minor",
+      "compatible": ["6A", "6B", "7A", "5A"],
+      "perfect": ["6A"],
+      "relative": ["6B"],
+      "adjacent": ["7A", "5A"],
+      "energyBoost": ["6B"],
+      "notes": "Same key (6A), relative major (6B), adjacent keys for smooth transitions"
+    },
+    "6B": {
+      "musicalKey": "B♭ major",
+      "compatible": ["6B", "6A", "7B", "5B"],
+      "perfect": ["6B"],
+      "relative": ["6A"],
+      "adjacent": ["7B", "5B"],
+      "energyBoost": ["7B"],
+      "notes": "Same key (6B), relative minor (6A), adjacent keys for smooth transitions"
+    },
+    "7A": {
+      "musicalKey": "D minor",
+      "compatible": ["7A", "7B", "8A", "6A"],
+      "perfect": ["7A"],
+      "relative": ["7B"],
+      "adjacent": ["8A", "6A"],
+      "energyBoost": ["7B"],
+      "notes": "Same key (7A), relative major (7B), adjacent keys for smooth transitions"
+    },
+    "7B": {
+      "musicalKey": "F major",
+      "compatible": ["7B", "7A", "8B", "6B"],
+      "perfect": ["7B"],
+      "relative": ["7A"],
+      "adjacent": ["8B", "6B"],
+      "energyBoost": ["8B"],
+      "notes": "Same key (7B), relative minor (7A), adjacent keys for smooth transitions"
+    },
+    "8A": {
+      "musicalKey": "A minor",
+      "compatible": ["8A", "8B", "9A", "7A"],
+      "perfect": ["8A"],
+      "relative": ["8B"],
+      "adjacent": ["9A", "7A"],
+      "energyBoost": ["8B"],
+      "notes": "Same key (8A), relative major (8B), adjacent keys for smooth transitions"
+    },
+    "8B": {
+      "musicalKey": "C major",
+      "compatible": ["8B", "8A", "9B", "7B"],
+      "perfect": ["8B"],
+      "relative": ["8A"],
+      "adjacent": ["9B", "7B"],
+      "energyBoost": ["9B"],
+      "notes": "Same key (8B), relative minor (8A), adjacent keys for smooth transitions"
+    },
+    "9A": {
+      "musicalKey": "E minor",
+      "compatible": ["9A", "9B", "10A", "8A"],
+      "perfect": ["9A"],
+      "relative": ["9B"],
+      "adjacent": ["10A", "8A"],
+      "energyBoost": ["9B"],
+      "notes": "Same key (9A), relative major (9B), adjacent keys for smooth transitions"
+    },
+    "9B": {
+      "musicalKey": "G major",
+      "compatible": ["9B", "9A", "10B", "8B"],
+      "perfect": ["9B"],
+      "relative": ["9A"],
+      "adjacent": ["10B", "8B"],
+      "energyBoost": ["10B"],
+      "notes": "Same key (9B), relative minor (9A), adjacent keys for smooth transitions"
+    },
+    "10A": {
+      "musicalKey": "B minor",
+      "compatible": ["10A", "10B", "11A", "9A"],
+      "perfect": ["10A"],
+      "relative": ["10B"],
+      "adjacent": ["11A", "9A"],
+      "energyBoost": ["10B"],
+      "notes": "Same key (10A), relative major (10B), adjacent keys for smooth transitions"
+    },
+    "10B": {
+      "musicalKey": "D major",
+      "compatible": ["10B", "10A", "11B", "9B"],
+      "perfect": ["10B"],
+      "relative": ["10A"],
+      "adjacent": ["11B", "9B"],
+      "energyBoost": ["11B"],
+      "notes": "Same key (10B), relative minor (10A), adjacent keys for smooth transitions"
+    },
+    "11A": {
+      "musicalKey": "F♯ minor / G♭ minor",
+      "compatible": ["11A", "11B", "12A", "10A"],
+      "perfect": ["11A"],
+      "relative": ["11B"],
+      "adjacent": ["12A", "10A"],
+      "energyBoost": ["11B"],
+      "notes": "Same key (11A), relative major (11B), adjacent keys for smooth transitions"
+    },
+    "11B": {
+      "musicalKey": "A major",
+      "compatible": ["11B", "11A", "12B", "10B"],
+      "perfect": ["11B"],
+      "relative": ["11A"],
+      "adjacent": ["12B", "10B"],
+      "energyBoost": ["12B"],
+      "notes": "Same key (11B), relative minor (11A), adjacent keys for smooth transitions"
+    },
+    "12A": {
+      "musicalKey": "D♭ minor / C♯ minor",
+      "compatible": ["12A", "12B", "1A", "11A"],
+      "perfect": ["12A"],
+      "relative": ["12B"],
+      "adjacent": ["1A", "11A"],
+      "energyBoost": ["12B"],
+      "notes": "Same key (12A), relative major (12B), adjacent keys for smooth transitions"
+    },
+    "12B": {
+      "musicalKey": "E major",
+      "compatible": ["12B", "12A", "1B", "11B"],
+      "perfect": ["12B"],
+      "relative": ["12A"],
+      "adjacent": ["1B", "11B"],
+      "energyBoost": ["1B"],
+      "notes": "Same key (12B), relative minor (12A), adjacent keys for smooth transitions"
+    }
+  },
+  "mixingRules": {
+    "perfect": {
+      "description": "Same key - perfect match, always works",
+      "compatibility": 1.0,
+      "difficulty": "beginner"
+    },
+    "relative": {
+      "description": "Relative major/minor - energy boost/drop, very compatible",
+      "compatibility": 0.95,
+      "difficulty": "beginner",
+      "notes": "A to B = energy boost, B to A = energy drop"
+    },
+    "adjacent": {
+      "description": "Adjacent keys on wheel - smooth harmonic transition",
+      "compatibility": 0.9,
+      "difficulty": "intermediate",
+      "notes": "+1 for energy build, -1 for energy drop"
+    },
+    "incompatible": {
+      "description": "Non-compatible keys - avoid or use creative mixing",
+      "compatibility": 0.3,
+      "difficulty": "advanced",
+      "notes": "Requires skill, quick transitions, or key changes"
+    }
+  },
+  "metadata": {
+    "version": "1.0.0",
+    "lastUpdated": "2025-01-01",
+    "totalKeys": 24,
+    "notes": "Based on the Camelot Wheel system for harmonic mixing. A = minor keys, B = major keys."
+  }
+}
