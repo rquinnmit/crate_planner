@@ -1,0 +1,20 @@
+TXT Crate
+=========
+
+001. S Artist - Sigma
+     Album: N/A
+     Genre: Tech House
+     BPM: 122 | Key: 8A | Duration: 4:00
+     Energy: 3/5
+     File: C:\Users\pyanq\6.104\crate_planner\tmp_test_audio\sr-001.mp3
+
+002. S Artist - Tau
+     Album: N/A
+     Genre: Tech House
+     BPM: 124 | Key: 8A | Duration: 4:00
+     Energy: 3/5
+     File: C:\Users\pyanq\6.104\crate_planner\tmp_test_audio\sr-002.mp3
+
+
+Total Tracks: 2
+Total Duration: 8:00

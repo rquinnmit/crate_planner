@@ -17,9 +17,15 @@ interface TestResult {
 
 const testFiles = [
     'catalog.test.ts',
-    'scorer.test.ts',
     'validator.test.ts',
-    'crate_planner.test.ts'
+    'spotify_field_validation.test.ts',
+    'parsing.test.ts',
+    'prompting.test.ts',
+    'revision.test.ts',
+    'candidate_pool.test.ts',
+    'music_theory.test.ts',
+    'crate_planner.test.ts',
+    'export.test.ts'
 ];
 
 /**

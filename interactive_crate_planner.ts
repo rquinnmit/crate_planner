@@ -7,7 +7,7 @@
 
 import { GeminiLLM, Config } from './src/llm/gemini-llm';
 import { MusicAssetCatalog } from './src/core/catalog';
-import { CratePlanner, CratePrompt } from './src/core/crate_planner';
+import { CratePlanner, CratePrompt, CratePlan } from './src/core/crate_planner';
 import { SpotifyImporter } from './src/import/spotify_importer';
 import { Track, CamelotKey } from './src/core/track';
 import * as readline from 'readline';
@@ -160,6 +160,74 @@ function initializeSampleCatalog(): MusicAssetCatalog {
 }
 
 /**
+ * Offer revision loop to user
+ */
+async function offerRevision(
+    currentPlan: CratePlan,
+    planner: CratePlanner,
+    llm: GeminiLLM,
+    rl: readline.Interface
+): Promise<void> {
+    return new Promise((resolve) => {
+        console.log('\n' + '='.repeat(50));
+        console.log('💬 Would you like to revise this crate? (yes/no)');
+        
+        rl.question('You: ', async (response) => {
+            if (response.toLowerCase() !== 'yes') {
+                resolve();
+                return;
+            }
+            
+            console.log('\n🔧 What would you like to change?');
+            console.log('Examples:');
+            console.log('  - "Avoid tracks by [Artist Name]"');
+            console.log('  - "Raise energy earlier in the set"');
+            console.log('  - "Add more tracks from [Genre]"');
+            console.log('  - "Replace slow tracks with faster ones"');
+            console.log('  - "Lower the BPM range"');
+            
+            rl.question('Revision: ', async (instructions) => {
+                try {
+                    if (instructions.trim().length < 5) {
+                        console.log('⚠️ Please provide more specific instructions (at least 5 characters).');
+                        resolve();
+                        return;
+                    }
+                    
+                    console.log('\n🤖 Processing revision...');
+                    const revisedPlan = await planner.revisePlanLLM(currentPlan, instructions, llm);
+                    
+                    console.log(`\n✅ Revision complete!`);
+                    console.log(`📝 Changes: ${revisedPlan.annotations}\n`);
+                    
+                    console.log('📋 Revised Crate:');
+                    console.log('=================');
+                    planner.displayCrate();
+                    
+                    // Validate revised plan
+                    console.log('\n✅ Validating revised crate...');
+                    const validation = planner.validate(revisedPlan, 300);
+                    if (validation.isValid) {
+                        console.log('✅ Validation passed!');
+                    } else {
+                        console.log('⚠️ Validation issues:');
+                        validation.errors.forEach(err => console.log(`   - ${err}`));
+                    }
+                    
+                    // Recursive revision loop
+                    await offerRevision(revisedPlan, planner, llm, rl);
+                    resolve();
+                    
+                } catch (error) {
+                    console.log(`\n❌ Revision error: ${(error as Error).message}`);
+                    resolve();
+                }
+            });
+        });
+    });
+}
+
+/**
  * Display available tracks in the catalog
  */
 function displayCatalog(catalog: MusicAssetCatalog): void {
@@ -177,7 +245,12 @@ function displayCatalog(catalog: MusicAssetCatalog): void {
  * Parse user input to extract crate planning parameters
  */
 function parseUserInput(input: string): CratePrompt | null {
-    // Simple parsing - in a real app, this would be more sophisticated
+    // Validate minimum input length
+    if (input.trim().length < 10) {
+        console.log('⚠️ Prompt is too short. Please provide more details about your event.');
+        return null;
+    }
+    
     const lowerInput = input.toLowerCase();
     
     // Extract BPM range
@@ -188,16 +261,28 @@ function parseUserInput(input: string): CratePrompt | null {
     const durationMatch = input.match(/(\d+)\s*min/i);
     const targetDuration = durationMatch ? parseInt(durationMatch[1]) * 60 : undefined;
     
-    // Extract genre
-    const genreMatch = input.match(/(tech house|deep house|progressive house|house|techno)/i);
+    // Extract genre (expanded list)
+    const genreMatch = input.match(/(tech house|deep house|progressive house|house|techno|trance|drum and bass|dubstep|ambient|downtempo)/i);
     const targetGenre = genreMatch ? genreMatch[1] : undefined;
     
     // Extract seed tracks (by ID or name)
     const seedTracks: string[] = [];
-    const trackIds = ['sunset-vibes-001', 'deep-groove-002', 'evening-flow-003', 'rooftop-rhythm-004', 'golden-hour-005'];
-    trackIds.forEach(id => {
-        if (lowerInput.includes(id.split('-')[0]) || lowerInput.includes(id.split('-')[1])) {
-            seedTracks.push(id);
+    const trackMappings = [
+        { keywords: ['sunset', 'vibes'], id: 'sunset-vibes-001' },
+        { keywords: ['deep', 'groove'], id: 'deep-groove-002' },
+        { keywords: ['evening', 'flow'], id: 'evening-flow-003' },
+        { keywords: ['rooftop', 'rhythm'], id: 'rooftop-rhythm-004' },
+        { keywords: ['golden', 'hour'], id: 'golden-hour-005' },
+        { keywords: ['horizon', 'pulse'], id: 'horizon-pulse-006' },
+        { keywords: ['peak', 'moment'], id: 'peak-moment-007' },
+        { keywords: ['energy', 'rise'], id: 'energy-rise-008' },
+        { keywords: ['summit', 'groove'], id: 'summit-groove-009' },
+        { keywords: ['twilight', 'fade'], id: 'twilight-fade-010' }
+    ];
+    
+    trackMappings.forEach(mapping => {
+        if (mapping.keywords.some(keyword => lowerInput.includes(keyword))) {
+            seedTracks.push(mapping.id);
         }
     });
     
@@ -337,6 +422,9 @@ async function startInteractiveCratePlanner(): Promise<void> {
                     console.log('⚠️ Validation issues:');
                     validation.errors.forEach(err => console.log(`   - ${err}`));
                 }
+                
+                // Offer revision loop
+                await offerRevision(explainedPlan, planner, llm, rl);
                 
             } catch (error) {
                 console.log(`\n❌ Error: ${(error as Error).message}`);

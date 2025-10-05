@@ -1,0 +1,9 @@
+#EXTM3U
+#PLAYLIST:U-RB
+
+#EXTINF:240,Test Artist - uni-001
+C:\Users\pyanq\6.104\crate_planner\tmp_test_audio\uni-001.mp3
+
+#EXTINF:240,Test Artist - uni-002
+C:\Users\pyanq\6.104\crate_planner\tmp_test_audio\uni-002.mp3
+

@@ -1,0 +1,9 @@
+#EXTM3U
+#PLAYLIST:Rel Playlist
+
+#EXTINF:240,Rel Artist - Rel Track
+..\tmp_test_audio\rel-001.mp3
+
+#EXTINF:240,Rel B - Rel B
+..\tmp_test_audio\rel-002.mp3
+

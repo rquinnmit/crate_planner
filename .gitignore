@@ -1,5 +1,6 @@
 # API Keys and sensitive data
 config.json
+.env
 
 # Generated files
 generated-schedule.json

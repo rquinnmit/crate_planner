@@ -1,0 +1,9 @@
+#EXTM3U
+#PLAYLIST:BothCase
+
+#EXTINF:240,Test Artist - both-001
+C:\Users\pyanq\6.104\crate_planner\tmp_test_audio\both-001.mp3
+
+#EXTINF:240,Test Artist - both-002
+C:\Users\pyanq\6.104\crate_planner\tmp_test_audio\both-002.mp3
+

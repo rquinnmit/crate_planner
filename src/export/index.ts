@@ -105,8 +105,13 @@ export class UniversalExporter {
         baseOutputPath: string,
         options?: Partial<Omit<UniversalExportOptions, 'platform' | 'outputPath'>>
     ): Promise<{ rekordbox: ExportResult; serato: ExportResult }> {
-        const rekordboxPath = baseOutputPath.replace(/\.[^.]+$/, '_rekordbox.m3u8');
-        const seratoPath = baseOutputPath.replace(/\.[^.]+$/, '_serato.m3u8');
+        const hasExtension = /\.[^.]+$/.test(baseOutputPath);
+        const rekordboxPath = hasExtension
+            ? baseOutputPath.replace(/\.[^.]+$/, '_rekordbox.m3u8')
+            : `${baseOutputPath}_rekordbox.m3u8`;
+        const seratoPath = hasExtension
+            ? baseOutputPath.replace(/\.[^.]+$/, '_serato.m3u8')
+            : `${baseOutputPath}_serato.m3u8`;
 
         const [rekordbox, serato] = await Promise.all([
             this.export(plan, {

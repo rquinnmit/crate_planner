@@ -86,7 +86,11 @@ export function parseDerivedIntent(response: string): DerivedIntent {
             avoidArtists: Array.isArray(parsed.avoidArtists) ? parsed.avoidArtists : [],
             mustIncludeTracks: Array.isArray(parsed.mustIncludeTracks) ? parsed.mustIncludeTracks : [],
             avoidTracks: Array.isArray(parsed.avoidTracks) ? parsed.avoidTracks : [],
-            energyCurve: parsed.energyCurve || 'linear'
+            energyCurve: parsed.energyCurve || 'linear',
+            // Optional Spotify-specific fields
+            targetEnergy: typeof parsed.targetEnergy === 'number' ? parsed.targetEnergy : undefined,
+            minPopularity: typeof parsed.minPopularity === 'number' ? parsed.minPopularity : undefined,
+            targetKeyCamelot: parsed.targetKeyCamelot || undefined
         };
         
         return intent;

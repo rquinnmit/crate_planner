@@ -102,9 +102,17 @@ export abstract class BaseImporter {
         await this.enforceRateLimit();
 
         const url = `${this.config.baseURL}${endpoint}`;
+        
+        // Only add Content-Type for POST/PUT/PATCH requests (not GET)
+        const method = options?.method || 'GET';
+        const baseHeaders: Record<string, string> = this.getAuthHeaders();
+        
+        if (method !== 'GET' && method !== 'HEAD') {
+            baseHeaders['Content-Type'] = 'application/json';
+        }
+        
         const headers = {
-            'Content-Type': 'application/json',
-            ...this.getAuthHeaders(),
+            ...baseHeaders,
             ...(options?.headers || {})
         };
 

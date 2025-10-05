@@ -1,0 +1,17 @@
+#EXTM3U
+#PLAYLIST:Test Playlist
+
+#EXTINF:240,Artist A - Alpha
+#EXTALB:Unknown Album
+#EXTGENRE:Tech House
+#EXTBPM:124
+#EXTKEY:8A
+C:\Users\pyanq\6.104\crate_planner\tmp_test_audio\rb-001.mp3
+
+#EXTINF:240,Artist B - Beta
+#EXTALB:Unknown Album
+#EXTGENRE:Tech House
+#EXTBPM:128
+#EXTKEY:8A
+C:\Users\pyanq\6.104\crate_planner\tmp_test_audio\rb-002.mp3
+

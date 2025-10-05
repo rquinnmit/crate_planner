@@ -91,6 +91,53 @@ interface SpotifySearchResponse {
 }
 
 /**
+ * Spotify artist object (simplified)
+ */
+interface SpotifyArtist {
+    id: string;
+    name: string;
+    uri: string;
+}
+
+/**
+ * Spotify artist search response
+ */
+interface SpotifyArtistSearchResponse {
+    artists: {
+        items: SpotifyArtist[];
+        total: number;
+    };
+}
+
+/**
+ * Spotify recommendations parameters
+ */
+export interface RecommendationsParams {
+    seed_artists?: string[];  // Up to 5 artist IDs
+    seed_tracks?: string[];   // Up to 5 track IDs
+    seed_genres?: string[];   // Up to 5 genre seeds
+    limit?: number;           // Max 100
+    market?: string;
+    min_tempo?: number;
+    max_tempo?: number;
+    target_tempo?: number;
+    min_energy?: number;
+    max_energy?: number;
+    target_energy?: number;
+    min_popularity?: number;
+    max_popularity?: number;
+    target_key?: number;      // 0-11
+    target_mode?: number;     // 0=minor, 1=major
+}
+
+/**
+ * Spotify recommendations response
+ */
+interface SpotifyRecommendationsResponse {
+    tracks: SpotifyTrack[];
+}
+
+/**
  * Spotify Importer - Main class
  */
 export class SpotifyImporter extends BaseImporter {
@@ -279,12 +326,15 @@ export class SpotifyImporter extends BaseImporter {
 
         // Map features to tracks
         const enrichedTracks: ExternalTrackData[] = [];
+        let tracksWithoutFeatures = 0;
 
         for (let i = 0; i < tracks.length; i++) {
             const track = tracks[i];
             const features = audioFeatures[i];
 
             if (!features) {
+                tracksWithoutFeatures++;
+                // Still include the track, normalizeTrack will use fallback values
                 enrichedTracks.push({
                     id: track.id,
                     artist: track.artists[0]?.name || 'Unknown Artist',
@@ -307,11 +357,16 @@ export class SpotifyImporter extends BaseImporter {
             enrichedTracks.push(enriched);
         }
 
+        if (tracksWithoutFeatures > 0) {
+            console.log(`   ℹ️  ${tracksWithoutFeatures} track(s) missing audio features (will use fallback values)`);
+        }
+
         return enrichedTracks;
     }
 
     /**
      * Get audio features for multiple tracks (batch)
+     * Falls back to nulls if endpoint is unavailable (403/404 with Client Credentials)
      * 
      * @param trackIds - Array of Spotify track IDs (max 100)
      * @returns Array of audio features (null for tracks without features)
@@ -326,10 +381,22 @@ export class SpotifyImporter extends BaseImporter {
 
         for (const batch of batches) {
             const ids = batch.join(',');
-            const response = await this.makeRequest<{ audio_features: (SpotifyAudioFeatures | null)[] }>(
-                `/audio-features?ids=${ids}`
-            );
-            allFeatures.push(...response.audio_features);
+            try {
+                const response = await this.makeRequest<{ audio_features: (SpotifyAudioFeatures | null)[] }>(
+                    `/audio-features?ids=${ids}`
+                );
+                allFeatures.push(...response.audio_features);
+            } catch (error) {
+                // Audio features endpoint may be unavailable with Client Credentials flow
+                const errorMsg = (error as Error).message;
+                if (errorMsg.includes('403') || errorMsg.includes('404')) {
+                    console.warn(`   ⚠️  Audio features unavailable (using fallbacks for ${batch.length} tracks)`);
+                    // Return nulls for all tracks in this batch
+                    allFeatures.push(...batch.map(() => null));
+                } else {
+                    throw error;
+                }
+            }
         }
 
         return allFeatures;
@@ -360,18 +427,33 @@ export class SpotifyImporter extends BaseImporter {
         const spotifyTrack = externalData.spotifyTrack as SpotifyTrack;
         const audioFeatures = externalData.audioFeatures as SpotifyAudioFeatures | undefined;
 
-        if (!spotifyTrack || !audioFeatures) {
+        if (!spotifyTrack) {
             return null;
         }
 
-        // Convert Spotify key + mode to Camelot
-        const camelotKey = spotifyKeyToCamelot(audioFeatures.key, audioFeatures.mode);
-        if (!camelotKey) {
-            return null; // Skip tracks without valid key
-        }
+        // If no audio features, use fallback values
+        let camelotKey: CamelotKey;
+        let bpm: number;
+        let energy: 1 | 2 | 3 | 4 | 5;
 
-        // Map energy (0-1) to our 1-5 scale
-        const energy = Math.ceil(audioFeatures.energy * 5) as 1 | 2 | 3 | 4 | 5;
+        if (audioFeatures) {
+            // Convert Spotify key + mode to Camelot
+            const convertedKey = spotifyKeyToCamelot(audioFeatures.key, audioFeatures.mode);
+            if (!convertedKey) {
+                // Use a default key if conversion fails
+                camelotKey = '8A' as CamelotKey;
+            } else {
+                camelotKey = convertedKey;
+            }
+
+            bpm = Math.round(audioFeatures.tempo);
+            energy = Math.ceil(audioFeatures.energy * 5) as 1 | 2 | 3 | 4 | 5;
+        } else {
+            // Fallback values when audio features are missing
+            camelotKey = '8A' as CamelotKey; // Neutral key
+            bpm = 120; // Average dance music tempo
+            energy = 3; // Medium energy
+        }
 
         // Extract year from release date
         const year = spotifyTrack.album.release_date 
@@ -387,7 +469,7 @@ export class SpotifyImporter extends BaseImporter {
             title: spotifyTrack.name,
             genre: undefined, // Spotify doesn't provide genre at track level
             duration_sec: Math.round(spotifyTrack.duration_ms / 1000),
-            bpm: Math.round(audioFeatures.tempo),
+            bpm,
             key: camelotKey,
             energy,
             album: spotifyTrack.album.name,
@@ -497,6 +579,154 @@ export class SpotifyImporter extends BaseImporter {
 
         this.spotifyConfig.accessToken = data.access_token;
         this.spotifyConfig.tokenExpiresAt = Date.now() + (data.expires_in * 1000);
+    }
+
+    /**
+     * Get recommendations from Spotify based on seeds and tunables
+     * 
+     * @param params - Recommendations parameters (seeds, constraints)
+     * @returns Import result with recommended tracks
+     */
+    async getRecommendations(params: RecommendationsParams): Promise<ImportResult> {
+        await this.ensureValidToken();
+
+        try {
+            // Validate seeds (max 5 total)
+            const totalSeeds = (params.seed_artists?.length || 0) + 
+                             (params.seed_tracks?.length || 0) + 
+                             (params.seed_genres?.length || 0);
+            
+            if (totalSeeds === 0) {
+                return {
+                    success: false,
+                    tracksImported: 0,
+                    tracksFailed: 0,
+                    errors: ['At least one seed (artist, track, or genre) is required'],
+                    warnings: []
+                };
+            }
+            
+            if (totalSeeds > 5) {
+                console.warn(`⚠️ Total seeds (${totalSeeds}) exceeds 5, Spotify will use first 5`);
+            }
+
+            // Build query parameters
+            const queryParams = new URLSearchParams();
+            
+            if (params.seed_artists) queryParams.append('seed_artists', params.seed_artists.join(','));
+            if (params.seed_tracks) queryParams.append('seed_tracks', params.seed_tracks.join(','));
+            if (params.seed_genres) queryParams.append('seed_genres', params.seed_genres.join(','));
+            if (params.limit) queryParams.append('limit', params.limit.toString());
+            if (params.market) queryParams.append('market', params.market);
+            if (params.min_tempo) queryParams.append('min_tempo', params.min_tempo.toString());
+            if (params.max_tempo) queryParams.append('max_tempo', params.max_tempo.toString());
+            if (params.target_tempo) queryParams.append('target_tempo', params.target_tempo.toString());
+            if (params.min_energy !== undefined) queryParams.append('min_energy', params.min_energy.toString());
+            if (params.max_energy !== undefined) queryParams.append('max_energy', params.max_energy.toString());
+            if (params.target_energy !== undefined) queryParams.append('target_energy', params.target_energy.toString());
+            if (params.min_popularity) queryParams.append('min_popularity', params.min_popularity.toString());
+            if (params.max_popularity) queryParams.append('max_popularity', params.max_popularity.toString());
+            if (params.target_key !== undefined) queryParams.append('target_key', params.target_key.toString());
+            if (params.target_mode !== undefined) queryParams.append('target_mode', params.target_mode.toString());
+
+            const response = await this.makeRequest<SpotifyRecommendationsResponse>(
+                `/recommendations?${queryParams.toString()}`
+            );
+
+            const enrichedTracks = await this.enrichTracksWithFeatures(response.tracks);
+            return await this.importTracks(enrichedTracks);
+
+        } catch (error) {
+            return {
+                success: false,
+                tracksImported: 0,
+                tracksFailed: 0,
+                errors: [(error as Error).message],
+                warnings: []
+            };
+        }
+    }
+
+    /**
+     * Get available genre seeds for recommendations
+     * Falls back to common genre list if API endpoint is unavailable
+     * 
+     * @returns Array of available genre strings
+     */
+    async getAvailableGenreSeeds(): Promise<string[]> {
+        await this.ensureValidToken();
+
+        try {
+            const response = await this.makeRequest<{ genres: string[] }>(
+                '/recommendations/available-genre-seeds'
+            );
+            return response.genres;
+        } catch (error) {
+            console.warn('⚠️  Genre seeds endpoint unavailable, using fallback list');
+            // Return common dance music genres as fallback
+            return this.getFallbackGenreSeeds();
+        }
+    }
+
+    /**
+     * Fallback genre seeds list (common dance/electronic genres)
+     * Used when the Spotify API endpoint is unavailable
+     */
+    private getFallbackGenreSeeds(): string[] {
+        return [
+            'house', 'tech-house', 'deep-house', 'progressive-house', 'electro-house',
+            'techno', 'minimal-techno', 'detroit-techno',
+            'trance', 'progressive-trance', 'psytrance',
+            'drum-and-bass', 'dubstep', 'trap', 'bass',
+            'ambient', 'downtempo', 'chill',
+            'disco', 'funk', 'soul',
+            'indie', 'indie-pop', 'alternative',
+            'electronic', 'edm', 'dance',
+            'hip-hop', 'rap', 'r-n-b',
+            'pop', 'rock', 'indie-rock'
+        ];
+    }
+
+    /**
+     * Search for artists by name and return their IDs
+     * 
+     * @param artistName - Artist name to search for
+     * @param limit - Maximum number of results (default: 1)
+     * @returns Array of artist IDs
+     */
+    async searchArtistsByName(artistName: string, limit: number = 1): Promise<string[]> {
+        await this.ensureValidToken();
+
+        try {
+            const response = await this.makeRequest<SpotifyArtistSearchResponse>(
+                `/search?q=${encodeURIComponent(artistName)}&type=artist&limit=${limit}`
+            );
+            return response.artists.items.map(artist => artist.id);
+        } catch (error) {
+            console.warn(`Failed to search artist "${artistName}":`, (error as Error).message);
+            return [];
+        }
+    }
+
+    /**
+     * Search for tracks by name and return their IDs
+     * 
+     * @param trackName - Track name to search for
+     * @param limit - Maximum number of results (default: 1)
+     * @returns Array of track IDs
+     */
+    async searchTracksByName(trackName: string, limit: number = 1): Promise<string[]> {
+        await this.ensureValidToken();
+
+        try {
+            const response = await this.makeRequest<SpotifySearchResponse>(
+                `/search?q=${encodeURIComponent(trackName)}&type=track&limit=${limit}`
+            );
+            return response.tracks.items.map(track => track.id);
+        } catch (error) {
+            console.warn(`Failed to search track "${trackName}":`, (error as Error).message);
+            return [];
+        }
     }
 
     /**

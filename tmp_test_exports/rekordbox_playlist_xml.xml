@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DJ_PLAYLISTS Version="1.0.0">
+  <PRODUCT Name="CratePilot" Version="1.0.0" Company="CratePilot"/>
+  <COLLECTION Entries="2">
+    <TRACK TrackID="1" Name="Alpha" Artist="Artist A" Album="" Genre="Tech House" Kind="MP3 File" TotalTime="240" Year="" AverageBpm="124" Tonality="8A" Label="" Location="..\tmp_test_audio\rb-001.mp3"/>
+    <TRACK TrackID="2" Name="Beta" Artist="Artist B" Album="" Genre="Tech House" Kind="MP3 File" TotalTime="240" Year="" AverageBpm="128" Tonality="8A" Label="" Location="..\tmp_test_audio\rb-002.mp3"/>
+  </COLLECTION>
+  <PLAYLISTS>
+    <NODE Type="0" Name="ROOT">
+      <NODE Name="Test XML Playlist" Type="1" KeyType="0" Entries="2">
+        <TRACK Key="1"/>
+        <TRACK Key="2"/>
+      </NODE>
+    </NODE>
+  </PLAYLISTS>
+</DJ_PLAYLISTS>

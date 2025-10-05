@@ -164,27 +164,17 @@ export SPOTIFY_CLIENT_ID="your_client_id"
 export SPOTIFY_CLIENT_SECRET="your_client_secret"
 ```
 
-**3. Import tracks**:
-```typescript
-import { MusicAssetCatalog } from './src/core/catalog';
-import { SpotifyImporter } from './src/import/spotify_importer';
-
-const catalog = new MusicAssetCatalog();
-const importer = new SpotifyImporter(catalog, {
-    clientId: process.env.SPOTIFY_CLIENT_ID!,
-    clientSecret: process.env.SPOTIFY_CLIENT_SECRET!,
-    baseURL: 'https://api.spotify.com/v1'
-});
-
-// Import 20 techno tracks
-const result = await importer.searchAndImport('genre:techno', 20);
-console.log(`Imported ${result.tracksImported} tracks`);
-```
-
-**4. Run examples**:
+**3. Run interactive crate planner with Spotify**:
 ```bash
-npm run example:spotify
+npm run interactive:spotify
 ```
+
+This will start an interactive session where you can:
+- Import tracks directly from Spotify
+- Create AI-powered crates with real-time track discovery
+
+**Important:** Due to Spotify API limitations with Client Credentials flow, audio features (BPM, key, energy) use fallback values (120 BPM, 8A key, medium energy). See `SPOTIFY_INTEGRATION_ANALYSIS.md` for details.
+- Export playlists to Rekordbox or Serato
 
 ### Testing
 
@@ -192,19 +182,29 @@ npm run example:spotify
 # Run all tests
 npm test
 
-# Test Spotify importer
-npm run test:spotify
-
-# Test crate planner
-npm run test:planner
+# Run individual test suites
+npm run test:catalog         # Test music catalog
+npm run test:validator       # Test validation logic
+npm run test:planner         # Test crate planner (requires Gemini API key)
+npm run test:export          # Test export functionality
+npm run test:music-theory    # Test music theory utilities
+npm run test:parsing         # Test LLM response parsing
+npm run test:revision        # Test plan revision/reprompting functionality
+npm run test:prompting       # Test prompt parsing (no API calls)
+npm run test:prompting-llm   # Test prompting with actual LLM calls (requires Gemini API key)
+npm run test:candidate-pool  # Test candidate pool generation (requires Gemini API key)
+npm run test:spotify         # Test Spotify importer (requires Spotify API credentials)
 ```
 
-### Documentation
+### Interactive Usage
 
-- **[Spotify Setup Guide](docs/SPOTIFY_SETUP.md)** - Quick 5-minute setup
-- **[Spotify Import Guide](docs/SPOTIFY_IMPORT_GUIDE.md)** - Complete API reference
-- **[Import Module README](src/import/README.md)** - Technical details
-- **[Export Module README](src/export/README.md)** - Export to DJ software
+```bash
+# Run interactive crate planner (local catalog)
+npm run interactive
+
+# Run interactive crate planner with Spotify integration
+npm run interactive:spotify
+```
 
 ## 📝 License
 

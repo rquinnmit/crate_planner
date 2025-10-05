@@ -7,25 +7,45 @@
     "build": "tsc",
     "test": "npx ts-node tests/run_all_tests.ts",
     "test:catalog": "npx ts-node tests/catalog.test.ts",
-    "test:scorer": "npx ts-node tests/scorer.test.ts",
     "test:validator": "npx ts-node tests/validator.test.ts",
+    "test:spotify-validation": "npx ts-node tests/spotify_field_validation.test.ts",
+    "test:revision": "npx ts-node tests/revision.test.ts",
     "test:planner": "npx ts-node tests/crate_planner.test.ts",
-    "test:manual": "npx ts-node -e \"require('./tests/crate_planner.test.ts').testManualCratePlanning()\"",
-    "test:ai": "npx ts-node -e \"require('./tests/crate_planner.test.ts').testAICratePlanning()\"",
-    "test:revision": "npx ts-node -e \"require('./tests/crate_planner.test.ts').testCrateRevision()\"",
-    "test:mixed": "npx ts-node -e \"require('./tests/crate_planner.test.ts').testMixedModePlanning()\"",
-    "test:spotify": "npx ts-node tests/spotify_importer.test.ts",
-    "example:spotify": "npx ts-node examples/spotify_import_example.ts"
+    "test:export": "npx ts-node tests/export.test.ts",
+    "test:music-theory": "npx ts-node tests/music_theory.test.ts",
+    "test:parsing": "npx ts-node tests/parsing.test.ts",
+    "test:prompting": "npx ts-node tests/prompting.test.ts",
+    "test:prompting-llm": "npx ts-node tests/prompting_llm.test.ts",
+    "test:candidate-pool": "npx ts-node tests/candidate_pool.test.ts",
+    "test:spotify": "npx ts-node -r dotenv/config tests/spotify_importer.test.ts",
+    "test:spotify-token": "npx ts-node -r dotenv/config tests/spotify_token_test.ts",
+    "test:spotify-search": "npx ts-node -r dotenv/config tests/spotify_search_test.ts",
+    "test:spotify-diagnostic": "npx ts-node -r dotenv/config tests/spotify_request_diagnostic.ts",
+    "test:spotify-llm": "npx ts-node -r dotenv/config tests/spotify_llm_integration.test.ts",
+    "interactive": "npx ts-node interactive_crate_planner.ts",
+    "interactive:spotify": "npx ts-node -r dotenv/config interactive_spotify_crate_planner.ts"
   },
-  "keywords": ["dj", "music", "crate", "planning", "ai", "gemini", "rekordbox", "serato", "mixing", "typescript"],
+  "keywords": [
+    "dj",
+    "music",
+    "crate",
+    "planning",
+    "ai",
+    "gemini",
+    "rekordbox",
+    "serato",
+    "mixing",
+    "typescript"
+  ],
   "author": "CratePilot",
   "license": "MIT",
   "dependencies": {
-    "@google/generative-ai": "^0.21.0"
+    "@google/generative-ai": "^0.21.0",
+    "dotenv": "^17.2.3"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
-    "typescript": "^5.0.0",
-    "ts-node": "^10.9.0"
+    "ts-node": "^10.9.0",
+    "typescript": "^5.0.0"
   }
 }

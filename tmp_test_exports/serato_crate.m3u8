@@ -1,0 +1,19 @@
+#EXTM3U
+#PLAYLIST:Test Crate
+
+#EXTINF:240,S Artist - Sigma
+#EXTALB:
+#EXTGENRE:Tech House
+#EXTBPM:122
+#EXTKEY:8A
+#EXTENERGY:3
+C:\Users\pyanq\6.104\crate_planner\tmp_test_audio\sr-001.mp3
+
+#EXTINF:240,S Artist - Tau
+#EXTALB:
+#EXTGENRE:Tech House
+#EXTBPM:124
+#EXTKEY:8A
+#EXTENERGY:3
+C:\Users\pyanq\6.104\crate_planner\tmp_test_audio\sr-002.mp3
+

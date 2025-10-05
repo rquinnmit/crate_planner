@@ -1,0 +1,17 @@
+#EXTM3U
+#PLAYLIST:CratePilot Plan 2
+
+#EXTINF:240,Test Artist - multi-002
+#EXTALB:Unknown Album
+#EXTGENRE:Tech House
+#EXTBPM:126
+#EXTKEY:8A
+C:\Users\pyanq\6.104\crate_planner\tmp_test_audio\multi-002.mp3
+
+#EXTINF:240,Test Artist - multi-001
+#EXTALB:Unknown Album
+#EXTGENRE:Tech House
+#EXTBPM:126
+#EXTKEY:8A
+C:\Users\pyanq\6.104\crate_planner\tmp_test_audio\multi-001.mp3
+

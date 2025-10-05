@@ -202,6 +202,19 @@ export function validateDerivedIntent(intent: DerivedIntent): ValidationResult {
         }
     }
     
+    // Validate Spotify-specific fields (optional)
+    if (intent.targetEnergy !== undefined) {
+        if (intent.targetEnergy < 0 || intent.targetEnergy > 1) {
+            errors.push('targetEnergy must be between 0 and 1');
+        }
+    }
+    
+    if (intent.minPopularity !== undefined) {
+        if (intent.minPopularity < 0 || intent.minPopularity > 100) {
+            errors.push('minPopularity must be between 0 and 100');
+        }
+    }
+    
     return {
         isValid: errors.length === 0,
         errors,
