@@ -4,6 +4,7 @@
   "description": "AI-powered DJ crate planning tool with Gemini integration",
   "main": "dist/index.js",
   "scripts": {
+    "start": "npx ts-node -r dotenv/config interactive_spotify_crate_planner.ts",
     "build": "tsc",
     "test": "npx ts-node tests/run_all_tests.ts",
     "test:catalog": "npx ts-node tests/catalog.test.ts",

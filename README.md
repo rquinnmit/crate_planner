@@ -1,211 +1,214 @@
 # CratePilot
 
-An AI co-pilot for DJs that converts a short event description and seed tracks into a performance-ready, ordered crate. Shrinks crate prep from hours to minutes by combining a structured library, prompt-driven planning, transition scoring, and one-click export to DJ software.
+## Augmented Design of a Concept
 
-## 🎯 Problem & Context
+### Old Design
+concept CratePlanning [TrackId, Prompt]
+purpose produce an ordered song crate that satisfies the given prompt
+principle a crate plan respects the constraints of the prompt and maximizes the transition and preference utilities
+state
+a set of Prompts with
+	an optional tempoRange Tuple<Float>
+	an optional targetKey String
+	an optional targetGenre String
+	an optional sampleTracks List<TrackId>
+	an optional targetDuration Integer
+	an optional notes String
+a set of Plans with
+	a prompt Prompt
+	a trackList Set<TrackId>
+	a annotations String
+	a totalDuration Integer
+actions
+createPlan(prompt: Prompt, seedTracks: List<TrackId>): (plan: Plan)
+requires every track in seedTracks is a valid track
+effect creates a draft order that satisfies the constraints and coverage of seed tracks
 
-**The Pain Point:** DJs spend significant time digging for tracks and testing what blends—balancing BPM, key, genre, structure, energy, and crowd fit. The workflow is fragmented across streaming sites, DJ apps, and personal notes.
+finalize(plan: Plan): ()
+requires the duration is within tolerance
+effect marks the plan as finalized, makes the ordering immutable, stores the plan in the library
 
-**Why Now:** Massive track volume and "one-size-fits-all" AI radios don't respect human style, venue constraints, or harmonic mixing rules.
-
-## 👥 Who It Serves
-
-- **DJs:** Faster prep, better compatibility, fewer risky transitions
-- **Venues & Audiences:** Sets that fit the event type and maintain flow
-- **Platforms** (Beatport/Beatsource) & **DJ Software** (Rekordbox/Serato): Cleaner discovery and direct playlist integration
-- **Artists/Labels:** Increased discovery by match quality (not just popularity)
-
-## ✨ Core Features
-
-### 1. Discovery
-Enter "rooftop sunset • tech house • 120–124 BPM" + 2–3 seed tracks → get a 90–120 min crate matched to style and constraints.
-
-### 2. Library
-Normalize & store track metadata/features; reuse across plans.
-
-### 3. Export
-One-click export to Rekordbox/Serato playlists for performance.
-
-## 🏗️ System Architecture
-
-### MusicAssetCatalog
-- Stores tracks with **Tags** (artist, title, genre, duration) and **Features** (BPM, key, sections)
-- Provides filtered candidate lists (by BPM range, key, genre, etc.)
-
-### CratePlanning
-- Produces an **ordered** crate that respects a **Prompt** (tempo range, key, genre, seeds, duration, notes)
-- Supports user feedback and finalization
-
-### PlanExporter
-- Converts finalized plans to DJ-software-friendly playlist formats
-
-## 🤖 AI Augmentation
-
-CratePlanning is extended with optional LLM-powered actions (manual path still works):
-
-- **deriveIntentLLM:** Interprets the prompt + seeds, expands constraints
-- **generateCandidatePoolLLM:** Builds filter expressions from the derived intent
-- **sequencePlanLLM:** Proposes an **ordered** list satisfying duration and energy trajectory
-- **explainPlanLLM:** Natural-language annotations explaining why each transition works
-- **revisePlanLLM:** Applies constrained edits from user instructions
-- **LLMSettings:** Toggle AI, set model/temperature/prompts; track provenance
-
-**Backwards compatibility:** Manual `createPlan` (deterministic heuristic) remains available; all AI features are additive and optional.
-
-## 📊 Data & Metadata
-
-### Tags
-- `artist`, `title`, `genre?`, `duration_sec`
-
-### Features
-- `bpm`, `key` (Camelot notation like 8A/8B), optional `sections`, optional `energy (1–5)`
-
-### Prompt
-- `tempoRange?`, `targetKey?`, `targetGenre?`, `sampleTracks?`, `targetDuration?`, `notes?`
-- Plus `mixingStyle?`, `energyCurve?` (for AI path)
+recordFeedback(plan: Plan, feedback: String): ()
+requires the plan has been finalized
+effect stores feedback so that our model can learn and better its predictions
 
 
-## 🔄 Workflow (Happy Path)
+### Augmented Design
 
-1. **User prompt & seeds** →
-2. *(AI on)* **deriveIntentLLM** (expand constraints & energy curve) →
-3. **generateCandidatePoolLLM** (filter catalog to a viable set) →
-4. **sequencePlanLLM** (order tracks to hit duration & optimize flow) →
-5. **explainPlanLLM** (rationale for track selection) →
-6. **validate** (duration tolerance, existence, duplicates) →
-7. **finalize** → **export** to Rekordbox/Serato
+concept CratePlanningAI [TrackId, Prompt]
+purpose produce an ordered song crate that satisfies the given prompt
+principle a crate plan respects the constraints of the prompt, assembles a candidate pool, and selects/orders tracks to maximize the preferences in the prompt. the prompts are dissected and processed by the LLM.
+state
+a set of Prompts with
+	an optional tempoRange Tuple<Float>
+	an optional targetKey String
+	an optional targetGenre String
+	an optional sampleTracks List<TrackId>
+	an optional targetDuration Integer
+	an optional notes String
+a set of DerivedIntents with
+	a tempoRange Tuple<Float>
+	an allowedKeys List<String>
+	a targetGenres List<String>
+	a duration Integer
+	a mixStyle String
+	a mustIncludeArtists List<String>
+	an avoidArtists List<String>
+	a mustIncludeTracks List<String>
+	an avoidTracks List<String>
+a set of LLMSettings with
+	a model String
+	a temperature Float
+	a promptTemplate String
+	an outputTemplate String
+a set of Plans with
+	a prompt Prompt
+	a trackList List<TrackId>
+	an annotations String
+	a totalDuration Integer
+	a planDetails with
+		an optional llmModel String
+		an optional llmTraceId String
 
-*(AI off):* `createPlan` uses deterministic heuristics and the same validators.
+a set of CandidatePools with
+	a sourcePrompt Prompt
+	a set of tracks Set<TrackId>
+	a filtersApplied String
 
-## ✅ Validation & Safety Rails
+actions
+createPlan(prompt: Prompt, seedTracks: List<TrackId>): (plan: Plan)
+requires every track in seedTracks is a valid track
+effect creates a draft order that satisfies the constraints and coverage of seed tracks
 
-- **Duration tolerance** (e.g., ±5 min around target)
-- **No duplicates** and **all tracks exist** in the catalog
-- Structured LLM prompts request **JSON-only** outputs with robust parsing & fallbacks to deterministic logic
+deriveIntentLLM(prompt: Prompt, seedTracks: List<TrackId>): (intent: DerivedIntent)
+requires plan exists and is valid
+effect calls an LLM to process/analyze the information from the plan’s prompt and seed tracks; uses this information to generate a new intent that will include more structured constraints for track selection
 
-## 🎨 User Experience
+generateCandidatePool(intent: DerivedIntent): (pool: CandidatePool)
+requires intent is valid
+effect uses the intent and an LLM to produce a set of track candidates
 
-- DJ lands on **Discovery**, enters an event description and seeds, and reviews a proposed crate
-- They can reprompt or issue targeted revisions ("swap the mid-set lull," "cap at 126 BPM")
-- After approval, the crate is saved to **Library** and **exported**
-- During performance, better track flow and energy progression → smoother set
+sequencePlan(intent: DerivedIntent, pool: CandidatePool, seedTracks: List<TrackId>?): (plan: Plan)
+requires pool is nonempty
+effect returns a plan with an ordered track list and duration
 
-## 🌟 What Makes It Different
+explainPlan(plan: Plan): (annotated: Plan)
+requires true
+effect calls an LLM to generate human-readable annotations for the generated crate
 
-- **Human-in-the-loop**: Keeps the DJ's style central; AI accelerates, doesn't replace
-- **Mix-aware planning**: Not just "similar tracks"—explicitly optimizes energy flow and track progression
-- **Operational compatibility**: Produces playlists that drop into standard DJ software
+revisePlan(plan: Plan, instructions: String): (revised: Plan)
+requires the plan exists
+effect calls an LLM to apply constrained edits to the plan; rechecks to make sure all applied constraints, both new and old, are conserved
 
-## ⚠️ Risks & Limitations (and Mitigations)
+finalize(plan: Plan): ()
+requires plan.totalDuration is within tolerance and plan.trackList has no duplicate tracks
+effect marks the plan as immutable and stores it for export
 
-- **Metadata quality variance:** Track keys/BPM may be noisy → allow manual overrides; add auto-validators; encourage verified sources
-- **LLM brittleness:** Non-JSON or off-spec responses → strict schemas, retries, and graceful deterministic fallbacks
-- **Style drift:** AI suggestions may miss a DJ's "voice" → seed-driven planning + revision prompts + feedback memory
-- **Catalog coverage:** If the local library is thin, discovery may be limited → future integrations with external catalogs
+validate(plan: Plan): (isValid: boolean, errors: List<String>?)
+requires the plan exists
+effect a) checks if plan.totalDuration is within the tolerance limits, b) verifies that no duplicate tracks exist in plan.trackList, and c) verifies that all tracks exist in our asset catalog
 
-## 📈 Success Metrics
+setLLMSettings(settings: LLMSettings): ()
+requires true
+effect updates the current settings of the LLM used
 
-- **Prep time reduction** (minutes vs baseline hours)
-- **User satisfaction** (revision count to acceptance, thumbs-up rate)
-- **Adoption** (export count, repeat usage, crate reuse)
 
-## 🗺️ Near-term Roadmap
 
-1. **Phrase alignment v1:** Basic section detection to encourage 16/32-bar swaps
-2. **Energy modeling:** Learn DJ-specific energy curves from feedback
-3. **Adaptive prompting:** Auto-tune prompt variants based on failure cases
-4. **Import pipelines:** Easier ingest from Beatport/Beatsource/record pools
-5. **Deeper export:** Hot cue/beat grid hints (where metadata allows)
+## Designed User Interaction
 
-## 🎪 Demo Scenarios
 
-### Scenario A
-"Rooftop sunset • tech house • 120–124 BPM • 90 min" with 3 seeds → show ordered crate and concise rationale.
+The user begins by filling out the prompt box with all of the information used to generate their set (desired BPM range, keys, vibe, setting, etc.). There is a panel where they can import seed tracks (tracks that match the gist of what the user is looking for in their set) for our LLM to analyze. Once the user enters the prompt, our LLM thinks for however long it needs to complete its decision making process, and it provides the user with some insights into the songs it's choosing. The LLM finishes processing and outputs a set of songs that it has pieced together for the generated set. The user can select “View” to view the chosen songs (and their details), export, and finalize the set. If the user is not satisfied with the set that was generated, they can reprompt the LLM with changes (in the same chat thread) and it will make edits to the set as needed. The LLM will, alongside the set it designs, provide the user with details as to why it chose those songs. If the user wants to navigate into any previous set generations, they can click the specified tabs on the left side of the screen.
 
-### Scenario B
-Apply a revision ("avoid Artist X, raise energy sooner") and re-validate.
 
-### Scenario C (AI off)
-Manual plan + a validator failure (duration mismatch) → fix and finalize.
+## Richer Test Cases and Prompts
 
-## 🚀 Getting Started
+### Test Case 1: Sunset Rooftop Party
 
-### Installation
+**Scenario:** A DJ needs to prepare a 60-minute tech house set for a rooftop sunset party. They want smooth energy progression starting mellow and building gradually.
 
-```bash
-# Clone the repository
-git clone <repository-url>
-cd crate_planner
+**User Actions:**
+1. **Initial Prompt:** `"Rooftop sunset party, tech house, 120-124 BPM, 60 minutes, smooth energy build"`
+2. **Seed Tracks:** Provides 2 reference tracks (Charlotte de Witte - "Formula", Amelie Lens - "In My Mind")
+3. **Review Generated Crate:** Sees 15 tracks with linear energy progression
+4. **Revision Request:** `"Raise energy earlier in the set, avoid tracks by FISHER"`
 
-# Install dependencies
-npm install
+**LLM Actions:**
+1. **`deriveIntentLLM()`** - Analyzes prompt, generates structured intent
+2. **`generateCandidatePoolLLM()`** - Searches Spotify for tech house tracks 120-124 BPM, selects 20 diverse candidates
+3. **`sequencePlanLLM()`** - Orders tracks for smooth progression, creates 60-minute setlist
+4. **`explainPlanLLM()`** - Generates annotations explaining track choices and energy flow
+5. **`revisePlanLLM()`** - Applies user feedback -> reorders tracks, removes FISHER, increases early energy
 
-# Build the project
-npm run build
-```
+**Prompt Variants:**
+- **Variant A:** `"Sunset vibes, tech house, 120-124 BPM, 60 minutes"`
+- **Variant B:** `"Rooftop party, smooth progressive energy, tech house, 60 minutes"`  
+- **Variant C:** `"Evening set, building energy from chill to peak, tech house, 120-124 BPM"`
 
-### Quick Start: Import Tracks from Spotify
+---
 
-CratePilot now supports importing track data from Spotify Web API, including BPM, key (Camelot notation), energy, and more.
+### Test Case 2: Peak Hour Club Set
 
-**1. Get Spotify API credentials** (2 minutes):
-- Go to [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)
-- Create a new app
-- Copy your Client ID and Client Secret
+**Scenario:** A club DJ needs an energetic 90-minute set for peak hours (11 PM - 12:30 AM). High energy throughout with strategic drops.
 
-**2. Set environment variables**:
-```bash
-# Windows PowerShell
-$env:SPOTIFY_CLIENT_ID="your_client_id"
-$env:SPOTIFY_CLIENT_SECRET="your_client_secret"
+**User Actions:**
+1. **Initial Prompt:** `"Peak hour club set, high energy, 125-130 BPM, 90 minutes, techno and tech house"`
+2. **Seed Tracks:** Provides 3 high-energy tracks (Adam Beyer - "Your Mind", Charlotte de Witte - "Rave On", Amelie Lens - "In My Mind")
+3. **Review Generated Crate:** Sees 20 tracks but notices too many tracks by same artist
+4. **Revision Request:** `"More artist variety, add some peak-time techno drops"`
+5. **Second Revision:** `"Lower BPM to 120-125 range, more accessible for crowd"`
 
-# Linux/Mac
-export SPOTIFY_CLIENT_ID="your_client_id"
-export SPOTIFY_CLIENT_SECRET="your_client_secret"
-```
+**LLM Actions:**
+1. **`deriveIntentLLM()`** - Identifies high-energy, peak-time intent → sets mixStyle: "energetic", energyCurve: "peak"
+2. **`generateCandidatePoolLLM()`** - Searches for techno/tech house 125-130 BPM → finds 25 high-energy tracks
+3. **`sequencePlanLLM()`** - Creates peak-time progression with strategic energy drops
+4. **`revisePlanLLM()`** - Applies artist diversity filter → replaces duplicate artists with new ones
+5. **`revisePlanLLM()`** - Adjusts BPM range → reselects tracks in 120-125 range
+6. **`explainPlanLLM()`** - Explains peak-time strategy and drop placements
 
-**3. Run interactive crate planner with Spotify**:
-```bash
-npm run interactive:spotify
-```
+**Prompt Variants:**
+- **Variant A:** `"Club peak hour, techno, high energy, 125-130 BPM, 90 minutes"`
+- **Variant B:** `"Late night club set, peak time energy, techno and tech house, 90 minutes"`
+- **Variant C:** `"Club closing set, maximum energy, techno drops, 125-130 BPM"`
 
-This will start an interactive session where you can:
-- Import tracks directly from Spotify
-- Create AI-powered crates with real-time track discovery
+---
 
-**Important:** Due to Spotify API limitations with Client Credentials flow, audio features (BPM, key, energy) use fallback values (120 BPM, 8A key, medium energy). See `SPOTIFY_INTEGRATION_ANALYSIS.md` for details.
-- Export playlists to Rekordbox or Serato
+### Test Case 3: Chill Lounge Session
 
-### Testing
+**Scenario:** A lounge DJ needs a 45-minute ambient/downtempo set for early evening (6-7 PM). Focus on smooth transitions and atmospheric tracks.
 
-```bash
-# Run all tests
-npm test
+**User Actions:**
+1. **Initial Prompt:** `"Chill lounge music, ambient and downtempo, 90-100 BPM, 45 minutes, smooth transitions"`
+2. **Seed Tracks:** Provides 2 atmospheric tracks (Bonobo - "Kerala", Tycho - "A Walk")
+3. **Review Generated Crate:** Gets 12 tracks but some are too energetic
+4. **Revision Request:** `"Lower energy level, more ambient, avoid tracks with heavy beats"`
 
-# Run individual test suites
-npm run test:catalog         # Test music catalog
-npm run test:validator       # Test validation logic
-npm run test:planner         # Test crate planner (requires Gemini API key)
-npm run test:export          # Test export functionality
-npm run test:music-theory    # Test music theory utilities
-npm run test:parsing         # Test LLM response parsing
-npm run test:revision        # Test plan revision/reprompting functionality
-npm run test:prompting       # Test prompt parsing (no API calls)
-npm run test:prompting-llm   # Test prompting with actual LLM calls (requires Gemini API key)
-npm run test:candidate-pool  # Test candidate pool generation (requires Gemini API key)
-npm run test:spotify         # Test Spotify importer (requires Spotify API credentials)
-```
+**LLM Actions:**
+1. **`deriveIntentLLM()`** - Recognizes chill/ambient intent
+2. **`generateCandidatePoolLLM()`** - Searches for ambient/downtempo 90-100 BPM, selects 15 atmospheric tracks
+3. **`sequencePlanLLM()`** - Creates smooth, uninterrupted flow for a 45-minute ambient journey
+4. **`revisePlanLLM()`** - Filters out high-energy tracks, replaces with more ambient selections
+5. **`explainPlanLLM()`** - Explains atmospheric progression and transition philosophy
 
-### Interactive Usage
+**Prompt Variants:**
+- **Variant A:** `"Lounge music, ambient, 90-100 BPM, 45 minutes"`
+- **Variant B:** `"Chill session, downtempo and ambient, smooth flow, 45 minutes"`
+- **Variant C:** `"Early evening lounge, atmospheric music, 90-100 BPM, no heavy beats"`
 
-```bash
-# Run interactive crate planner (local catalog)
-npm run interactive
+---
 
-# Run interactive crate planner with Spotify integration
-npm run interactive:spotify
-```
+## Experimental Results & Analysis
 
-## 📝 License
+### Experiment 1: Sunset Rooftop Party
+**Approach:** Used LLM to derive structured intent from natural language ("smooth energy build") and generate a 60-minute tech house crate with linear energy progression. **What worked:** LLM successfully parsed "sunset party" context into appropriate BPM range (120-124) and smooth mix style. The revision loop allowed for fine-tuning. **What went wrong:** There are issues with the parsing/inputting of song BPMs, so all the songs fall back onto 120 BPM. Initial generation placed seed tracks suboptimally within the energy curve, and duration precision was off by 8 minutes despite constraints. **Issues that remain:** LLM sometimes misinterprets energy descriptors, and the revision process required multiple iterations to achieve the desired result.
 
-[License information would go here]
+### Experiment 2: Peak Hour Club Set
+**Approach:** Tested LLM's ability to handle high-energy and peak-time scenarios with multiple revision requests and artist diversity constraints. **What worked:** LLM correctly identified peak-time intent and applied artist diversity filters effectively. The revision loop successfully handled both energy adjustments and BPM range changes. **What went wrong:** There are issues with the parsing/inputting of song BPMs, so all the songs fall back onto 120 BPM. Initial generation over-represented certain artists heavily (5 tracks from same artist). **Issues that remain:** Genre boundary detection is inconsistent (blurred techno vs tech house). Large revisions sometimes require multiple passes to achieve desired changes.
+
+### Experiment 3: Chill Lounge Session
+**Approach:** Evaluated LLM's performance with low-energy, more atmospheric music selection. **What worked:** LLM accurately recognized ambient/downtempo intent and set appropriate energy levels. The revision process filtered out high-energy tracks. **What went wrong:** There are issues with the parsing/inputting of song BPMs, so all the songs fall back onto 120 BPM. Some initially selected tracks were too energetic despite a more chill context, and the LLM struggled with the subjective nature of "heavy beats" in revision requests. **Issues that remain:** Energy remains subjective (1-5 scale may not align with user expectations), and the system lacks cultural context for more specific requirements.
+
+---
+
+## Validators in Code
+
+Our three validators involved putting caps on the song crate duration, the max/min BPM levels, and invalid keys. This ensures that, even if the user puts in a prompt request for one of these invalid fields, our LLM cannot effectively output songs outside of these ranges. These validation checks are found inside of src/validation/constraints.ts, and they are run during out validation step (after the LLM produces a candidate and selection of tracks). It might be helpful to throw these checks before our LLM has the ability to output it's selected crate to the frontend.
