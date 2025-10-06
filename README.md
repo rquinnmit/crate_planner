@@ -116,6 +116,10 @@ effect updates the current settings of the LLM used
 
 ## Designed User Interaction
 
+![image1](/assets/user_int_1.png)
+![image2](/assets/user_int_2.png)
+![image3](/assets/user_int_3.png)
+![image4](/assets/user_int_4.png)
 
 The user begins by filling out the prompt box with all of the information used to generate their set (desired BPM range, keys, vibe, setting, etc.). There is a panel where they can import seed tracks (tracks that match the gist of what the user is looking for in their set) for our LLM to analyze. Once the user enters the prompt, our LLM thinks for however long it needs to complete its decision making process, and it provides the user with some insights into the songs it's choosing. The LLM finishes processing and outputs a set of songs that it has pieced together for the generated set. The user can select “View” to view the chosen songs (and their details), export, and finalize the set. If the user is not satisfied with the set that was generated, they can reprompt the LLM with changes (in the same chat thread) and it will make edits to the set as needed. The LLM will, alongside the set it designs, provide the user with details as to why it chose those songs. If the user wants to navigate into any previous set generations, they can click the specified tabs on the left side of the screen.
 
